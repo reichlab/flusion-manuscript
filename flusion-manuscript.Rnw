@@ -1,0 +1,134 @@
+\documentclass{article}
+
+\usepackage[letterpaper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+\usepackage{amsmath, amsfonts, amssymb}
+\usepackage{graphicx}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{amsthm}
+\usepackage{bm}
+\usepackage{cases}
+\usepackage{caption}
+\usepackage{xr-hyper}
+\usepackage{hyperref}
+\usepackage{xurl}
+\externaldocument{supplement_short}
+
+\DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator{\short}{sh}
+\DeclareMathOperator{\Ex}{\mathbb{E}}
+
+
+\usepackage{setspace}
+\onehalfspacing
+
+\usepackage{parskip}
+
+\usepackage{soul}
+\usepackage{xcolor}
+\def\elr#1{{\color{cyan}\textbf{ELR:[#1]}}}
+\def\apg#1{{\color{red}\textbf{APG:[#1]}}}
+\def\bwr#1{{\color{violet}\textbf{BWR:[#1]}}}
+\def\ngr#1{{\color{blue}\textbf{NGR:[#1]}}}
+
+\usepackage{natbib}
+\bibliographystyle{unsrtnat-abbr}
+
+
+\title{Evaluating infectious disease forecasts \\ with allocation scoring rules}
+\author{Evan L. Ray, possible additions include Nicholas G. Reich, Russ Wolfinger, Serena Wang}
+
+\begin{document}
+
+\maketitle
+
+<<setup, tidy=FALSE, echo=FALSE, message=FALSE>>=
+knitr::opts_chunk$set(echo=FALSE, message=FALSE, warning=FALSE)
+@
+
+<<environment-setup>>=
+library(ggplot2)
+theme_set(theme_bw())
+
+## necessary to have project root as wd, to override document directory
+knitr::opts_knit$set(root.dir = '../')
+@
+
+\begin{abstract}
+
+
+\end{abstract}
+
+\section{Introduction}
+
+People have been forecasting influenza for a long time, and these forecasts may be helpful to public health practitioners.
+
+In particular, there is a long history of forecasting seasonal influenza, often through formal collaborative forecasting exercises organized by the US Centers for Disease Control and Prevention (CDC).
+\begin{itemize}
+\item Long history going back 10 years
+\item After a pause during the first two years of the COVID-19 pandemic, this forecasting exercise restarted in the 2022/23 flu season.
+\end{itemize}
+
+A challenge in recent forecasting exercises is that new data streams have come online which are being used as the ``ground truth'' target for these forecasting exercises.  These data sources have been great in many ways, but the lack of an extensive history of data for model training introduces difficulty for learning about seasonal patterns in flu.  To address this challenge, this season we developed a new model, called `flusion`, which pulls in data from external data sources with a long history of observations.  This model was the top-performing model that was contributed to the FluSight Forecast Hub in the 2023/24 influenza season.  The purpose of this paper is to describe that model and investigate the aspects of its design that were associated with its strong performance.
+
+\section{Data Sources}
+
+Our model uses influenza data from four data sources, which are combined to produce three signals measuring the intensity of influenza activity over time and space:
+\begin{itemize}
+\item `NHSN`: Influenza hospital admissions as reported at the state level in a data set that is collected as part of the National Healthcare Safety Network (NHSN)
+\item `ILI+`: An approximate measure of 
+\item `FluSurv`: 
+\end{itemize}
+
+
+\section{Model}
+
+Our model was constructed as an ensemble of statistical time series and machine learning models.  We begin describe the component models in sections \ref{subsec:model_sarix} and \ref{subsec:model_gbm} and the ensemble methods in section \ref{subsec:methods_ensemble}.  The precise formulation of the models included in the ensemble and the ensembling methods varied slightly over the course of the season, and we describe these aspects of our setup for generating real-time predictions in section \ref{subsec:model_realtime}.
+
+\subsection{Component Model 1: SARIX}
+
+
+
+\subsection{Component Model 2: GBM}
+
+
+
+\subsection{Ensembling Methods: Quantile averaging and linear pools}
+
+
+
+\subsection{Model adjustments used for real time forecasts}
+
+
+
+\section{Real-time performance: the 2023/24 season}
+
+In this section, we document that the proposed flusion model had strong performance throughout the 2023/24 influenza season. It was the strongest model contributed to the FluSight hub other than ensembles of all contributed models created by the Hub -- and for much of the season, it even outperformed the Hub ensemble model.
+
+\begin{enumerate}
+\item Figure: show forecasts over the course of the season for our model and for the hub ensemble for selected locations.
+\item Table: overall performance measures, maybe split out by horizon, geographic scale, etc.  Our model, hub ensemble, others.
+\item Figure: Overall performance measures by horizon and reference date.
+\end{enumerate}
+
+Similar, omitting forecasts affected by data revisions?
+
+\section{Post hoc model exploration}
+
+In this section, we conduct some additional investigations designed to inform an understanding of why this model performed as well as it did.  Specifically, the questions motivating these analyses are:
+\begin{enumerate}
+\item are the individual GBM and SARIX models good, or did we get benefits from ensembling?
+\item how helpful is training on other data streams?
+\item this season was relatively early (only 1-2 weeks later than last season) and had peak incidence nearly identical to last season’s peak.  how much did we benefit from that?  how much would performance degrade in larger/smaller/later seasons?
+\item why does the model seem to respond so strongly to local level features and what can we do about it?
+\end{enumerate}
+
+
+\section*{Acknowledgements}
+
+This work has been supported by the National Institutes of General Medical Sciences (R35GM119582) and the U.S. CDC(1U01IP001122). The content is solely the responsibility of the authors and does not necessarily represent the official views of NIGMS, the National Institutes of Health, or CDC.
+
+\bibliography{allocation}
+
+\end{document}
