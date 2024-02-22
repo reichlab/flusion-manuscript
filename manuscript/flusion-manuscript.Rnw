@@ -130,6 +130,15 @@ Additionally, while its prediction interval coverage rates tended to be undercon
 
 TODO: Supplemental analysis with similar results, omitting forecasts affected by data revisions?
 
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{../artifacts/figures/forecasts_flusight.pdf}
+    \caption{Influenza data and forecasts for selected models.}
+    \label{fig:forecasts_flusight}
+\end{figure}
+
+
 <<overall-scores, results='asis'>>=
 overall_scores_table <- read_csv("../artifacts/scores/scores_by_model_flusight_all.csv") |>
   add_model_anon(
