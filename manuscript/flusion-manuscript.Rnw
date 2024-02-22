@@ -120,13 +120,11 @@ The second baseline method, \textbf{Baseline-trend}, follows a similar process w
 
 TODO: finalize language here/check that statements made hold up at the end of the season.
 
-Aggregating across all forecast dates and forecast horizons, the Flusion model had the best performance as measured by RWIS and RAE among all models that contributed to the FluSight Forecast Hub (Table \ref{tab:scores_flusight}). The Flusion model was consistently among the top-ranking models contributing to the forecast hub for individual forecast reference dates and the forecast horizons (Figure \ref{fig:scores_flusight} (b)).
+Forecasts from the Flusion model often appeared similar to forecasts from the FluSight-ensemble, though in several states (e.g. Florida, California, and New York) Flusion did a better job of capturing the increase in weekly hospital admissions in the early part of the season and a slightly better job of predicting the turnaround after the peak in late December (Figure \ref{fig:forecasts_flusight}). Qualitatively, it appears that both the FluSight-ensemble and the Flusion model captured trends in hospital admissions better than the baseline models during all phases of the season -- during the rise in the early part of the season, near the peak, and on the way down.
+
+Aggregating across all forecast dates and forecast horizons, the Flusion model had the best performance as measured by RWIS and RAE among all models that contributed to the FluSight Forecast Hub (Table \ref{tab:scores_flusight}). The Flusion model was consistently among the top-ranking models contributing to the forecast hub for individual forecast reference dates and forecast horizons (Figure \ref{fig:scores_flusight} (b)).
  
 Additionally, while its prediction interval coverage rates tended to be underconfident (i.e., prediction intervals were too wide on average), the 95\% PI coverage rates for Flusion came closest to the nominal coverage rate among all models (Table \ref{tab:scores_flusight}). An examination of one-sided quantile coverage rates confirms that Flusion was unique among models contributed to the Hub in that its coverage rates for high quantile levels were too high (indicating that the upper tail of the predictive distributions tended to fall above the eventually observed data more often than expected), while nearly all other models missed in the upper tails more often than expected (Figure \ref{fig:scores_flusight} (c)). Overall, the probabilistic calibration of the Flusion model was comparable to or better than that of other models contributed to the Hub, and it was superior to the calibration of the baseline and ensemble models.
-
-\begin{enumerate}
-\item Figure: show forecasts over the course of the season for our model and for the hub ensemble for selected locations.
-\end{enumerate}
 
 TODO: Supplemental analysis with similar results, omitting forecasts affected by data revisions?
 
@@ -134,7 +132,7 @@ TODO: Supplemental analysis with similar results, omitting forecasts affected by
 \begin{figure}[h]
     \centering
     \includegraphics[width=\textwidth]{../artifacts/figures/forecasts_flusight.pdf}
-    \caption{Influenza data and forecasts for selected models.}
+    \caption{Influenza data and forecasts for the five states with the largest cumulative hospital admissions during the 2023/24 season. To avoid overplotting, in this figure forecasts from every fourth reference date are shown; evaluations include all reference dates. Forecasts are represented by the predictive median (black lines) and 50\% and 95\% prediction intervals (blue shaded regions). Solid orange lines show the finalized admission counts reported as of TODO, while dotted orange lines show the initial reported values that were available on the date predictions were generated.}
     \label{fig:forecasts_flusight}
 \end{figure}
 

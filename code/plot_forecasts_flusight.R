@@ -130,6 +130,7 @@ p <- ggplot() +
   ) +
   geom_line(
     mapping = aes(x = date, y = value, linetype = report_type),
+    linewidth = 0.75,
     color = "orange",
     data = combined_target_data_for_plot) +
   scale_linetype("Reported Data") +
