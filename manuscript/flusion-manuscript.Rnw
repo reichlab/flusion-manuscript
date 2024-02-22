@@ -4,16 +4,8 @@
 
 \usepackage{amsmath, amsfonts, amssymb}
 \usepackage{graphicx}
-\usepackage{algorithm}
-\usepackage[noend]{algpseudocode}
-\usepackage{amsthm}
 \usepackage{bm}
-\usepackage{cases}
-\usepackage{caption}
-\usepackage{xr-hyper}
 \usepackage{hyperref}
-\usepackage{xurl}
-\externaldocument{supplement_short}
 
 \DeclareMathOperator*{\argmin}{argmin}
 \DeclareMathOperator{\short}{sh}
@@ -36,8 +28,8 @@
 \bibliographystyle{unsrtnat-abbr}
 
 
-\title{Evaluating infectious disease forecasts \\ with allocation scoring rules}
-\author{Evan L. Ray, possible additions include Nicholas G. Reich, Russ Wolfinger, Serena Wang}
+\title{Forecasting influenza by training on multiple data sources}
+\author{Evan L. Ray, possible additions include Nicholas G. Reich, Russ Wolfinger, Yijin Wang}
 
 \begin{document}
 
@@ -48,11 +40,14 @@ knitr::opts_chunk$set(echo=FALSE, message=FALSE, warning=FALSE)
 @
 
 <<environment-setup>>=
-library(ggplot2)
-theme_set(theme_bw())
+library(readr)
+library(dplyr)
+library(xtable)
+
+source("../code/utils.R")
 
 ## necessary to have project root as wd, to override document directory
-knitr::opts_knit$set(root.dir = '../')
+# knitr::opts_knit$set(root.dir = '../')
 @
 
 \begin{abstract}
@@ -62,15 +57,13 @@ knitr::opts_knit$set(root.dir = '../')
 
 \section{Introduction}
 
-People have been forecasting influenza for a long time, and these forecasts may be helpful to public health practitioners.
-
-In particular, there is a long history of forecasting seasonal influenza, often through formal collaborative forecasting exercises organized by the US Centers for Disease Control and Prevention (CDC).
+There is a long history of forecasting seasonal influenza, often through formal collaborative forecasting exercises organized by the US Centers for Disease Control and Prevention (CDC).
 \begin{itemize}
 \item Long history going back 10 years
 \item After a pause during the first two years of the COVID-19 pandemic, this forecasting exercise restarted in the 2022/23 flu season.
 \end{itemize}
 
-A challenge in recent forecasting exercises is that new data streams have come online which are being used as the ``ground truth'' target for these forecasting exercises.  These data sources have been great in many ways, but the lack of an extensive history of data for model training introduces difficulty for learning about seasonal patterns in flu.  To address this challenge, this season we developed a new model, called `flusion`, which pulls in data from external data sources with a long history of observations.  This model was the top-performing model that was contributed to the FluSight Forecast Hub in the 2023/24 influenza season.  The purpose of this paper is to describe that model and investigate the aspects of its design that were associated with its strong performance.
+A challenge in recent forecasting exercises is that new data streams have come online which are being used as the ``ground truth'' target for these forecasting exercises.  These data sources have been great in many ways, but the lack of an extensive history of data for model training introduces difficulty for learning about seasonal patterns in flu.  To address this challenge, this season we developed a new model, called `flusion`, which pulls in data from external data sources with a long history of observations.  This model was the top-performing model that was contributed to the FluSight Forecast Hub in the 2023/24 influenza season.  The purpose of this paper is to describe that model and investigate what aspects of its design were associated with its strong performance.
 
 \section{Data Sources}
 
@@ -101,18 +94,103 @@ Our model was constructed as an ensemble of statistical time series and machine 
 \subsection{Model adjustments used for real time forecasts}
 
 
+\section{Evaluation metrics}
+
+In the sections below, we evaluate forecasts using two metrics: the weighted interval score (WIS) and quantile coverage rates.
+
+We also compute relative versions of these metrics.
 
 \section{Real-time performance: the 2023/24 season}
 
-In this section, we document that the proposed flusion model had strong performance throughout the 2023/24 influenza season. It was the strongest model contributed to the FluSight hub other than ensembles of all contributed models created by the Hub -- and for much of the season, it even outperformed the Hub ensemble model.
+In this section, we summarize model performance results for real-time submissions to the FluSight Forecast Hub in the 2023/24 season.
+
+\subsection{Evaluation setup}
+
+We included all models that contributed forecasts for at least 75\% of the combinations of location, reference date, and horizon for which the Hub collected forecasts over the course of the season. Because a comprehensive evaluation of all Hub contributors is not the aim of this manuscript, we have anonymized the names of other individually-contributed models in these results to focus attention on the comparisons that are of interest for our purposes.
+
+The FluSight hub produced two ensemble forecasts during the season: one using a quantile averaging approach and one using a linear pool. These two ensembles had similar performance, though the linear pool had slightly better calibration. However, the quantile averaging ensemble was used by CDC as the source of official communications throughout the season, and so we include results from only that ensemble here.
+
+We also included results from two baseline methods. \textbf{Baseline-flat} is a random walk model produced by the Hub (labeled as \textbf{FluSight-baseline} in Hub submissions), which produces forecasts that extend from the most recent observation in a flat line, with expanding uncertainty based on historical differences in weekly hospital admissions. In this method, for each location $i$ the historical differences $\delta_{i,t} = y_{i,t} - y_{i,t-1}$ are collected, along with their negative values $-\delta_{i,t}$ (a process which we refer to as ``symmetrizing'' the differences). Forecasts at multiple step-ahead horizons are generated by iteratively sampling from this collection of symmetrized weekly differences.
+
+The second baseline method, \textbf{Baseline-trend}, follows a similar process with a few modifications that are designed so that the resulting forecasts tend to follow the trend of recent observations. It is a quantile averaging ensemble of 16 variations on the baseline method. Most importantly, it incorporates variations that do not symmetrize the past differences, and rather than using all available history, it collects differences in a rolling window of the past few weeks. The 16 variations are obtained by using different options for the rolling window size, the temporal resolution of data used as an input (daily or weekly), a data transformation that is applied (no transformation or square root), and whether or not symmetrization is used. We emphasize that although this baseline is more methodologically involved than \textbf{Baseline-flat}, it produces an epidemiologically naive forecast that pushes forward a local estimate of the trend observed over the few most recent weeks. This model is named \textbf{UMass-trends\_ensemble} in real-time Hub submissions.
+
+\subsection{Evaluation results}
+
+[TODO: finalize language here/check that statements made hold up at the end of the season] Aggregating across all forecast dates and forecast horizons, the Flusion model had the best performance as measured by RWIS and RAE among all models that contributed to the FluSight Forecast Hub (Table \ref{tab:scores_flusight}). The Flusion model was consistently among the top-ranking models contributing to the forecast hub for individual forecast reference dates and the forecast horizons (Figure \ref{fig:scores_flusight} (b)).
+ 
+Additionally, while its prediction interval coverage rates tended to be underconfident (i.e., prediction intervals were too wide on average), the 95\% PI coverage rates for Flusion came closest to the nominal coverage rate among all models (Table \ref{tab:scores_flusight}). An examination of one-sided quantile coverage rates confirms that Flusion was unique among models contributed to the Hub in that its coverage rates for high quantile levels were too high (indicating that the upper tail of the predictive distributions tended to fall above the eventually observed data more often than expected), while nearly all other models missed in the upper tails more often than expected (Figure \ref{fig:scores_flusight} (c)). Overall, the probabilistic calibration of the Flusion model was generally comparable to or better than that of other models contributed to the Hub, and it was superior to the calibration of the baseline and ensemble models.
 
 \begin{enumerate}
 \item Figure: show forecasts over the course of the season for our model and for the hub ensemble for selected locations.
-\item Table: overall performance measures, maybe split out by horizon, geographic scale, etc.  Our model, hub ensemble, others.
-\item Figure: Overall performance measures by horizon and reference date.
 \end{enumerate}
 
-Similar, omitting forecasts affected by data revisions?
+TODO: Supplemental analysis with similar results, omitting forecasts affected by data revisions?
+
+<<overall-scores, results='asis'>>=
+overall_scores_table <- read_csv("../artifacts/scores/scores_by_model_flusight_all.csv") |>
+  add_model_anon(
+    highlighted_models = c(
+      "UMass-flusion" = "Flusion",
+      "FluSight-ensemble" = "FluSight-ensemble",
+      "FluSight-baseline" = "Baseline-flat",
+      "UMass-trends_ensemble" = "Baseline-trend"),
+    number_others = TRUE
+  ) |>
+  mutate(Model = model_anon,
+         `\\% Submitted` = prop * 100,
+         MWIS = wis,
+         RWIS = wis_scaled_relative_skill,
+         MAE = ae_median,
+         RAE = ae_median_scaled_relative_skill,
+         `50\\% PI Cov.` = interval_coverage_50,
+         `95\\% PI Cov.` = interval_coverage_95,
+         .keep = "none") |>
+  arrange(RWIS) |>
+  xtable::xtable(
+    caption = paste("Overall evaluation results for forecasts submitted to the FluSight Forecast Hub. Model names other than \\textbf{Flusion}, \\textbf{FluSight-ensemble}, \\textbf{Baseline-flat}, and \\textbf{Baseline-trend} are anonymized. The percent of all combinations of location, reference date, and horizon for which the given model submitted forecasts is shown in the ``\\% Submitted\" column; only models submitting at least 75\\% of forecasts were included. Results for the model with the best MWIS, RWIS, MAE, and RAE are highlighted. Results for the models where empirical PI coverage rates are closest to the nominal levels are highlighted."),
+    label = "tab:scores_flusight")
+
+digits(overall_scores_table) <- c(0, 0, 1, 1, 3, 1, 3, 3, 3)
+
+# print with specified entries in bold font
+# adapted from https://gist.github.com/floybix/452201
+bold_entries <- cbind(
+  !grepl("Other Model", overall_scores_table$Model),
+  rep(FALSE, nrow(overall_scores_table)),
+  overall_scores_table$MWIS == min(overall_scores_table$MWIS),
+  overall_scores_table$RWIS == min(overall_scores_table$RWIS),
+  overall_scores_table$MAE == min(overall_scores_table$MAE),
+  overall_scores_table$RAE == min(overall_scores_table$RAE),
+  abs(overall_scores_table[["50\\% PI Cov."]] - 0.5) == min(abs(overall_scores_table[["50\\% PI Cov."]] - 0.5)),
+  abs(overall_scores_table[["95\\% PI Cov."]] - 0.95) == min(abs(overall_scores_table[["95\\% PI Cov."]] - 0.95))
+)
+
+display <- display(overall_scores_table)
+digits <- digits(overall_scores_table)
+for (i in 1:ncol(overall_scores_table)) {
+  if (is.numeric(overall_scores_table[,i])) {
+    overall_scores_table[,i] <- formatC(
+      overall_scores_table[,i],
+      digits = digits[i+1],
+      format = display[i+1])
+    display(overall_scores_table)[i+1] <- "s"
+  }
+
+  ## embolden
+  yes <- bold_entries[,i]
+  overall_scores_table[yes,i] <- paste("\\textbf{", overall_scores_table[yes,i], "}", sep = "")
+}
+
+print(overall_scores_table,
+      include.rownames = FALSE, sanitize.text.function = function(x) {x})
+@
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{../artifacts/figures/scores_flusight.pdf}
+    \caption{Influenza data and evaluation results. Panel (a): Target influenza hospital admissions data for the 2023/24 season, aggregated across all forecasted state-level geographic units. Panel (b): RWIS for models contributing to the FluSight Forecast Hub, stratified by forecast horizon (panels) and target date (horizontal axis). Lower relative WIS indicates better forecast performance. To focus on areas of interest, RWIS values greater than 2.5 are not displayed. Panel (c): One-sided quantile coverage differential, computed as empirical coverage rate minus nominal coverage rate. A well-calibrated model has a differential of 0, while a conservative method (with wide prediction intervals) has a negative differential at nominal coverage rates that are less than 0.5 and a positive differential at nominal coverage rates greater than 0.5. In panels (b) and (c), we highlight performance for the Flusion model, two baselines, and the FluSight ensemble; results for other models contributed to the hub are shown in light grey.}
+    \label{fig:scores_flusight}
+\end{figure}
 
 \section{Post hoc model exploration}
 
