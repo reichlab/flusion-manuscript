@@ -20,7 +20,6 @@ compute_raw_scores <- function(data_for_su, scoring_funs) {
       c("location", "reference_date", "horizon", "target_end_date", "target",
         "model")) |>
     scoringutils::as_forecast() |>
-    # scoringutils::add_coverage() |>
     scoringutils::score(metrics = scoring_funs)
   return(raw_scores)
 }
