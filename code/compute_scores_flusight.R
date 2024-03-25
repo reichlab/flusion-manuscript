@@ -1,7 +1,7 @@
 library(here)
 setwd(here::here())
 
-library(hubUtils)
+library(hubData)
 library(scoringutils)
 
 library(readr)
