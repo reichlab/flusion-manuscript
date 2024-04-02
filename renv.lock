@@ -756,6 +756,32 @@
       ],
       "Hash": "b59377caa7ed00fa41808342002138f9"
     },
+    "hubUtils": {
+      "Package": "hubUtils",
+      "Version": "0.0.1",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteUsername": "Infectious-Disease-Modeling-Hubs",
+      "RemoteRepo": "hubUtils",
+      "RemoteRef": "main",
+      "RemoteSha": "4adfe2550922cc8e18e1a31d065edc46521e5842",
+      "Remotes": "Infectious-Disease-Modeling-Hubs/hubData, Infectious-Disease-Modeling-Hubs/hubAdmin",
+      "Requirements": [
+        "R",
+        "checkmate",
+        "cli",
+        "glue",
+        "lifecycle",
+        "magrittr",
+        "memoise",
+        "purrr",
+        "rlang",
+        "stringr",
+        "tibble"
+      ],
+      "Hash": "17bc7227fc763bed64c939a105c01bcf"
+    },
     "hubData": {
       "Package": "hubData",
       "Version": "0.0.1",
@@ -782,32 +808,6 @@
         "yaml"
       ],
       "Hash": "3443ae0c30f99c3b15878adb3fe29f70"
-    },
-    "hubUtils": {
-      "Package": "hubUtils",
-      "Version": "0.0.1",
-      "Source": "GitHub",
-      "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteUsername": "Infectious-Disease-Modeling-Hubs",
-      "RemoteRepo": "hubUtils",
-      "RemoteRef": "main",
-      "RemoteSha": "4adfe2550922cc8e18e1a31d065edc46521e5842",
-      "Remotes": "Infectious-Disease-Modeling-Hubs/hubData, Infectious-Disease-Modeling-Hubs/hubAdmin",
-      "Requirements": [
-        "R",
-        "checkmate",
-        "cli",
-        "glue",
-        "lifecycle",
-        "magrittr",
-        "memoise",
-        "purrr",
-        "rlang",
-        "stringr",
-        "tibble"
-      ],
-      "Hash": "17bc7227fc763bed64c939a105c01bcf"
     },
     "isoband": {
       "Package": "isoband",

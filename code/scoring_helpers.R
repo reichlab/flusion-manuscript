@@ -20,6 +20,7 @@ compute_raw_scores <- function(data_for_su, scoring_funs) {
       c("location", "reference_date", "horizon", "target_end_date", "target",
         "model")) |>
     scoringutils::as_forecast() |>
+    # scoringutils::add_coverage() |>
     scoringutils::score(metrics = scoring_funs)
   return(raw_scores)
 }
@@ -37,10 +38,11 @@ compute_summarized_scores <- function(raw_scores, by, data_for_su,
                        names_prefix = "q_coverage_")
 
   summarized_scores <- raw_scores |>
-    scoringutils::add_pairwise_comparison(
+    scoringutils::add_relative_skill(
       by = by,
+      metric = "wis",
       baseline = "FluSight-baseline") |>
-    scoringutils::add_pairwise_comparison(
+    scoringutils::add_relative_skill(
       by = by,
       baseline = "FluSight-baseline",
       metric = "ae_median") |>
