@@ -34,7 +34,7 @@ by <- list("model",
 scores <- compute_scores(forecasts = forecasts,
                          target_data = target_data,
                          by = by,
-                         submission_threshold = 0.75)
+                         submission_threshold = 2/3)
 
 save_dir <- "artifacts/scores"
 if (!dir.exists(save_dir)) {
