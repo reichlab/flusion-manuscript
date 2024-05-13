@@ -59,36 +59,36 @@ baseline_forecasts <- load_forecasts(
 )
 
 
-# load flusion components
-models <- c("UMass-gbq_qr", "UMass-gbq_qr_no_reporting_adj", "UMass-gbq_qr_hhs_only")
+# load gbq model variations
+models <- c("UMass-gbq_qr", "UMass-gbq_qr_fit_locations_separately")
 
 # retrospective predictions exist for dates where a model was not fit in real
 # time or there was a bug affecting its real-time predictions
-component_forecasts_retrospective <- load_forecasts(
+gbq_forecasts_retrospective <- load_forecasts(
   "../flusion/retrospective-hub", models,
   adjust_horizon = TRUE
 )
 
 # load forecasts from submissions-hub
-component_forecasts_submissions <- load_forecasts(
+gbq_forecasts_submissions <- load_forecasts(
   "../flusion/submissions-hub", models,
   adjust_horizon = TRUE
 )
 
 # combine, keeping everything from retrospective fits and
 # anything from submissions hub that was not replaced by a retrospective fit
-component_forecasts <- dplyr::bind_rows(
-  component_forecasts_retrospective,
+gbq_forecasts <- dplyr::bind_rows(
+  gbq_forecasts_retrospective,
   anti_join(
-    component_forecasts_submissions,
-    component_forecasts_retrospective,
+    gbq_forecasts_submissions,
+    gbq_forecasts_retrospective,
     by = c("model_id", "location", "reference_date", "horizon")
   )
 )
 
 forecasts <- dplyr::bind_rows(
   baseline_forecasts,
-  component_forecasts
+  gbq_forecasts
 )
 
 # compute and save score summaries -- all data
@@ -110,6 +110,6 @@ for (i in seq_along(by)) {
   by_str <- paste(by[[i]], collapse = "_")
   readr::write_csv(
     scores[[i]],
-    file.path(save_dir, paste0("scores_by_", by_str, "_flusion_data_adj.csv"))
+    file.path(save_dir, paste0("scores_by_", by_str, "_location_strategy.csv"))
   )
 }
