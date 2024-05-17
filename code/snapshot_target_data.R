@@ -20,7 +20,7 @@ initial_target_data <- purrr::map(
   function(f) {
     f_date <- as.Date(substr(basename(f), 5, 14))
     f_contents <- readr::read_csv(f)
-    return(f_contents |> dplyr::filter(date == (f_date - 4)))
+    return(f_contents |> dplyr::slice_max(date, n = 1))
   }) |>
   purrr::list_rbind()
 

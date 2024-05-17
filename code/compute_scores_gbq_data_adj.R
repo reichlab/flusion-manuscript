@@ -11,6 +11,19 @@ source("code/scoring_helpers.R")
 
 # load data
 target_data <- readr::read_csv("artifacts/target_data.csv")
+initial_target_data <- readr::read_csv("artifacts/initial_target_data.csv")
+target_data_without_revisions <- target_data |>
+  dplyr::left_join(
+    initial_target_data |>
+      dplyr::rename(initial_value = inc),
+    by = c("location", "date")
+  ) |>
+  dplyr::mutate(
+    revision_size = abs(value - initial_value),
+    revision_prop = revision_size / (value + 1),
+    revision_prop2 = revision_size / (initial_value + 1)
+  ) |>
+  dplyr::filter(revision_size < 10)
 
 #' load forecasts
 #'
@@ -93,24 +106,37 @@ forecasts <- dplyr::bind_rows(
 )
 
 # compute and save score summaries -- all data
-by <- list("model",
-           c("model", "horizon"),
-           c("model", "horizon", "reference_date"))
-
-scores <- compute_scores(forecasts = forecasts,
-                         target_data = target_data,
-                         by = by,
-                         submission_threshold = 0.5)
-
 save_dir <- "artifacts/scores"
 if (!dir.exists(save_dir)) {
   dir.create(save_dir, recursive = TRUE)
 }
 
-for (i in seq_along(by)) {
-  by_str <- paste(by[[i]], collapse = "_")
-  readr::write_csv(
-    scores[[i]],
-    file.path(save_dir, paste0("scores_by_", by_str, "_flusion_data_adj.csv"))
-  )
+by <- list("model",
+           c("model", "horizon"),
+           c("model", "horizon", "reference_date"))
+
+for (target_data_spec in c("all", "without_revisions")) {
+  if (target_data_spec == "all") {
+    td <- target_data
+    file_name_add <- ""
+  } else {
+    td <- target_data_without_revisions
+    file_name_add <- "_without_revisions"
+  }
+
+  scores <- compute_scores(forecasts = forecasts,
+                           target_data = td,
+                           by = by,
+                           submission_threshold = 0.5)
+
+  for (i in seq_along(by)) {
+    by_str <- paste(by[[i]], collapse = "_")
+    readr::write_csv(
+      scores[[i]],
+      file.path(
+        save_dir,
+        paste0("scores_by_", by_str, "_flusion_data_adj", file_name_add, ".csv")
+      )
+    )
+  }
 }
