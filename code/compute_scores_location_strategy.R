@@ -11,19 +11,7 @@ source("code/scoring_helpers.R")
 
 # load data
 target_data <- readr::read_csv("artifacts/target_data.csv")
-initial_target_data <- readr::read_csv("artifacts/initial_target_data.csv")
-target_data_without_revisions <- target_data |>
-  dplyr::left_join(
-    initial_target_data |>
-      dplyr::rename(initial_value = inc),
-    by = c("location", "date")
-  ) |>
-  dplyr::mutate(
-    revision_size = abs(value - initial_value),
-    revision_prop = revision_size / (value + 1),
-    revision_prop2 = revision_size / (initial_value + 1)
-  ) |>
-  dplyr::filter(revision_size < 10)
+ref_date_loc_revised <- get_ref_date_loc_revised()
 
 #' load forecasts
 #'
@@ -114,17 +102,19 @@ by <- list("model",
            c("model", "horizon"),
            c("model", "horizon", "reference_date"))
 
-for (target_data_spec in c("all", "without_revisions")) {
-  if (target_data_spec == "all") {
-    td <- target_data
+for (to_score in c("all", "without_revisions")) {
+  if (to_score == "all") {
+    forecasts_to_score <- forecasts
     file_name_add <- ""
   } else {
-    td <- target_data_without_revisions
+    forecasts_to_score <- forecasts |>
+      dplyr::anti_join(ref_date_loc_revised,
+                       by = c("reference_date", "location"))
     file_name_add <- "_without_revisions"
   }
 
-  scores <- compute_scores(forecasts = forecasts,
-                           target_data = td,
+  scores <- compute_scores(forecasts = forecasts_to_score,
+                           target_data = target_data,
                            by = by,
                            submission_threshold = 0.5)
 
