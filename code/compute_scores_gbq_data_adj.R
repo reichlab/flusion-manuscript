@@ -31,7 +31,7 @@ load_forecasts <- function(hub_path, models, adjust_horizon = FALSE) {
       output_type == "quantile",
       model_id %in% models,
       reference_date >= "2023-10-14",
-      reference_date <= "2024-04-27",
+      target_end_date <= "2024-04-27",
       location != "US",
       location != "78"
     ) |>

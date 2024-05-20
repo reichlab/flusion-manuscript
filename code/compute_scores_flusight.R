@@ -23,6 +23,7 @@ forecasts <- hub_con |>
   as_model_out_tbl() |>
   dplyr::filter(horizon >= 0,
                 reference_date >= "2023-10-14",
+                target_end_date <= "2024-04-27",
                 location != "US",
                 location != "78",
                 model_id != "FluSight-lop_norm")
