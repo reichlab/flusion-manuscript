@@ -12,7 +12,37 @@ To build this project, you will need the following supporting repositories to be
 - [flusion](https://github.com/reichlab/flusion)
 - [FluSight-forecast-hub](https://github.com/cdcepi/FluSight-forecast-hub/)
 
-We use `renv` for R environment management. To set up your R environment, run the following command in an R session in this project:
+### Docker
+
+We use Docker.  To build the Docker image, use the following command from the parent directory of the `flusion-manuscript` repository. That is, you should be in a directory that contains `flusion-manuscript`, `flusion`, and `FluSight-forecast-hub`.
+
+```bash
+docker build -f flusion-manuscript/Dockerfile -t flusionmanu .
+```
+
+Now, with `flusion-manuscript` as your working directory, you can use that image to conduct analyses.
+
+The following starts up a bash shell:
+
+```bash
+docker run -it \
+    -v ./artifacts:/flusion-manuscript/artifacts \
+    -v ./manuscript:/flusion-manuscript/manuscript \
+    flusionmanu bash
+```
+
+The following runs one of the R scripts to compute scores:
+
+```bash
+docker run -it \
+    -v ./artifacts:/flusion-manuscript/artifacts \
+    -v ./manuscript:/flusion-manuscript/manuscript \
+    flusionmanu Rscript code/compute_scores_joint_training.R
+```
+
+### Using `renv` without Docker
+
+We have not had good luck with using `renv` to get a stable development environment setup going across different machines, so we recommend using Docker as described above.  But if you want to try your luck, you can try to run the following command in an R session in this project:
 
 ```{r}
 renv::restore()

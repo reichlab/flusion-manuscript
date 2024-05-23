@@ -61,7 +61,8 @@ baseline_forecasts <- load_forecasts(
 
 
 # load gbq model variations
-models <- c("UMass-gbq_qr", "UMass-gbq_qr_fit_locations_separately")
+models <- c("UMass-gbq_qr", "UMass-gbq_qr_fit_locations_separately",
+            "UMass-gbq_qr_hhs_only")
 
 # retrospective predictions exist for dates where a model was not fit in real
 # time or there was a bug affecting its real-time predictions
@@ -124,7 +125,7 @@ for (to_score in c("all", "without_revisions")) {
       scores[[i]],
       file.path(
         save_dir,
-        paste0("scores_by_", by_str, "_location_strategy", file_name_add, ".csv")
+        paste0("scores_by_", by_str, "_joint_training", file_name_add, ".csv")
       )
     )
   }

@@ -62,7 +62,7 @@ baseline_forecasts <- load_forecasts(
 
 # load flusion components
 models <- c("UMass-gbq_qr", "UMass-gbq_qr_no_reporting_adj",
-            "UMass-gbq_qr_no_transform", "UMass-gbq_qr_hhs_only")
+            "UMass-gbq_qr_no_transform")
 
 # retrospective predictions exist for dates where a model was not fit in real
 # time or there was a bug affecting its real-time predictions
