@@ -198,11 +198,11 @@ The second baseline method, \textbf{Baseline-trend}, follows a similar process w
 
 \subsection{Evaluation results}
 
-Forecasts from the Flusion model often appeared similar to forecasts from the FluSight-ensemble, though in several states (e.g. Florida, California, and New York) Flusion did a better job of capturing the increase in weekly hospital admissions in the early part of the season and a slightly better job of predicting the turnaround after the peak in late December (Figure \ref{fig:forecasts_flusight}). Qualitatively, it appears that both the FluSight-ensemble and the Flusion model captured trends in hospital admissions better than the baseline models during all phases of the season -- during the rise in the early part of the season, near the peak, and on the way down. TODO: add discussion of failure after holidays/before next rise.
+Forecasts from the Flusion model often appeared similar to forecasts from the FluSight-ensemble, though in several states (e.g. Florida, California, and New York) Flusion did a better job of capturing the increase in weekly hospital admissions in the early part of the season and a slightly better job of predicting the turnaround after the peak in late December (Figure \ref{fig:forecasts_flusight}). Qualitatively, both the FluSight-ensemble and the Flusion model generally captured trends in hospital admissions better than the baseline models during all phases of the season -- during the rise in the early part of the season, near the peak, and on the way down. An exception to this can be seen in forecasts for New York and Pennsylvania that were produced with a reference date of February 3, 2024. Those states had two local peaks: one near Christmas, and a second in late February or early March. This was a common pattern in many states in the northern US in the 2023/24 season, and in these instances the Flusion model typically produced incorrect predictions of continued decreases after the first peak heading into the second peak.
 
 Aggregating across all forecast dates and forecast horizons, the Flusion model had the best performance as measured by RWIS and RAE among all models that contributed to the FluSight Forecast Hub (Table \ref{tab:scores_flusight}). The Flusion model was consistently among the top-ranking models contributing to the forecast hub for individual forecast reference dates and forecast horizons (Figure \ref{fig:scores_flusight} (b)).
  
-Additionally, while its prediction interval coverage rates tended to be underconfident (i.e., prediction intervals were too wide on average), the 95\% PI coverage rates for Flusion came closest to the nominal coverage rate among all models (Table \ref{tab:scores_flusight}). An examination of one-sided quantile coverage rates confirms that Flusion was unique among models contributed to the Hub in that its coverage rates for high quantile levels were too high (indicating that the upper tail of the predictive distributions tended to fall above the eventually observed data more often than expected), while nearly all other models missed in the upper tails more often than expected (Figure \ref{fig:scores_flusight} (c)). Overall, the probabilistic calibration of the Flusion model was comparable to or better than that of other models contributed to the Hub, and it was superior to the calibration of the baseline and ensemble models.
+Prediction intervals from the Flusion model tended to be underconfident (i.e., prediction intervals were too wide on average) (Table \ref{tab:scores_flusight}). An examination of one-sided quantile coverage rates indicates that marginally, the predictive quantiles in the upper tail of the forecast distribution are fairly well calibrated, while predictions for the lower quantile levels were too small on average (Figure \ref{fig:scores_flusight} (c)). Overall, the probabilistic calibration of the Flusion model was comparable to or better than that of other models contributed to the Hub, and it was superior to the calibration of the baseline and ensemble models.
 
 TODO: Supplemental analysis with similar results, omitting forecasts affected by data revisions?
 
@@ -294,7 +294,7 @@ print(overall_scores_table,
 \begin{figure}[h]
     \centering
     \includegraphics[width=\textwidth]{../artifacts/figures/scores_flusight.pdf}
-    \caption{Influenza data and evaluation results. Panel (a): Target influenza hospital admissions data for the 2023/24 season, aggregated across all forecasted state-level geographic units. Panel (b): RWIS for models contributing to the FluSight Forecast Hub, stratified by forecast horizon (panels) and target date (horizontal axis). Lower relative WIS indicates better forecast performance. To focus on areas of interest, RWIS values greater than 2.5 are not displayed. Panel (c): One-sided quantile coverage differential, computed as empirical coverage rate minus nominal coverage rate. A well-calibrated model has a differential of 0, while a conservative method (with wide prediction intervals) has a negative differential at nominal coverage rates that are less than 0.5 and a positive differential at nominal coverage rates greater than 0.5. In panels (b) and (c), we highlight performance for the Flusion model, two baselines, and the FluSight ensemble; results for other models contributed to the hub are shown in light grey.}
+    \caption{Influenza data and evaluation results. Panel (a): Target influenza hospital admissions data for the 2023/24 season, aggregated across all forecasted state-level geographic units. Panel (b): RWIS for models contributing to the FluSight Forecast Hub, stratified by forecast horizon (panels) and target date (horizontal axis). Lower relative WIS indicates better forecast performance. To focus on regions of interest, RWIS values greater than 2.5 are not displayed. Panel (c): One-sided quantile coverage differential, computed as empirical coverage rate minus nominal coverage rate. A well-calibrated model has a differential of 0, while a conservative method (with wide prediction intervals) has a negative differential at nominal coverage rates that are less than 0.5 and a positive differential at nominal coverage rates greater than 0.5. In panels (b) and (c), we highlight performance for the Flusion model, two baselines, and the FluSight ensemble; results for other models contributed to the hub are shown in light grey.}
     \label{fig:scores_flusight}
 \end{figure}
 
@@ -305,7 +305,7 @@ In this section, we investigate the degree to which the following aspects of the
 \begin{enumerate*}
 \item the formulation of Flusion as an ensemble of three individual models;
 \item joint training on multiple data sets and multiple locations;
-\item data preprocessing, including corrections for reporting inconsistencies in the ILINet and FluSurvNET data, the use of a fourth root data transform, and the importance of the features we used
+\item data preprocessing, including corrections for reporting inconsistencies in the ILINet and FluSurvNET data, the use of a fourth root data transform, and the importance of the features that were used by the GBQ model.
 \end{enumerate*}
 
 \subsection{Component models and ensembling}
@@ -330,12 +330,18 @@ component_scores <- read_csv("../artifacts/scores/scores_by_model_flusion_compon
 
 component_scores_table <- make_scores_table(
   component_scores,
-  caption = paste("Evaluation results for individual component models in the Flusion ensemble, ensembles of pairs of components, and the full Flusion ensemble, with the flat baseline as a reference. The percent of all combinations of location, reference date, and horizon for which the given model submitted forecasts is shown in the ``\\% Submitted\" column; only models submitting at least 2/3 of forecasts were included. Results for the model with the best MWIS, RWIS, MAE, and RAE are highlighted. Results for the models where empirical PI coverage rates are closest to the nominal levels are highlighted."),
+  caption = NULL,
   bold_modelnames = FALSE
 )
-print(component_scores_table,
-      include.rownames = FALSE, sanitize.text.function = function(x) {x})
-
+table_2a <- capture.output(
+  print(component_scores_table,
+        include.rownames = FALSE, sanitize.text.function = function(x) {x})
+)
+table_2a <- c(
+  table_2a[1:5],
+  "\\multicolumn{8}{l}{Experiment A: Component model performance} \\\\",
+  table_2a[6:17]
+)
 
 joint_training_scores <- read_csv("../artifacts/scores/scores_by_model_joint_training.csv") |>
   mutate(
@@ -349,12 +355,18 @@ joint_training_scores <- read_csv("../artifacts/scores/scores_by_model_joint_tra
 
 joint_training_scores_table <- make_scores_table(
   joint_training_scores,
-  caption = paste("Evaluation results for the GBQ model, which is trained jointly on data for all locations and data sources, and variations trained separately for each location (GBQ-by-location) and trained only on hospital admissions from NHSN (GBQ-only-NHSN). The percent of all combinations of location, reference date, and horizon for which the given model submitted forecasts is shown in the ``\\% Submitted\" column; only models submitting at least 2/3 of forecasts were included. Results for the model with the best MWIS, RWIS, MAE, and RAE are highlighted. Results for the models where empirical PI coverage rates are closest to the nominal levels are highlighted."),
+  caption = NULL,
   bold_modelnames = FALSE
 )
-print(joint_training_scores_table,
-      include.rownames = FALSE, sanitize.text.function = function(x) {x})
-
+table_2b <- capture.output(
+  print(joint_training_scores_table,
+        include.rownames = FALSE, sanitize.text.function = function(x) {x})
+)
+table_2b <- c(
+  "\\\\",
+  "\\multicolumn{8}{l}{Experiment B: Reduced training data} \\\\",
+  table_2b[6:13]
+)
 
 preprocessing_scores <- read_csv("../artifacts/scores/scores_by_model_flusion_data_adj.csv") |>
   mutate(
@@ -368,11 +380,22 @@ preprocessing_scores <- read_csv("../artifacts/scores/scores_by_model_flusion_da
 
 preprocessing_scores_table <- make_scores_table(
   preprocessing_scores,
-  caption = paste("Evaluation results for the GBQ model, which makes use of reporting adjustments designed to improve the degree to which ILINet and FluSurvNET data reflect influenza activity as well as a fourth-root power transform, and variations that do not incorporate reporting adjustments (GBQ-no-reporting-adj) or a fourth-root transform (GBQ-no-transform), along with the flat baseline as a reference. The percent of all combinations of location, reference date, and horizon for which the given model submitted forecasts is shown in the ``\\% Submitted\" column; only models submitting at least 2/3 of forecasts were included. Results for the model with the best MWIS, RWIS, MAE, and RAE are highlighted. Results for the models where empirical PI coverage rates are closest to the nominal levels are highlighted."),
+  caption = paste("Evaluation results for post hoc experiments investigating determinants of model performance.  Experiment A gives results for individual component models in the Flusion ensemble, ensembles of pairs of components, and the full Flusion ensemble including all three components.  Experiment B gives results for the GBQ model, which is trained jointly on data for all locations and data sources, and variations trained separately for each location (GBQ-by-location) and trained only on hospital admissions from NHSN (GBQ-only-NHSN).  Experiment C gives results for a variation on the GBQ model that does not incorporate reporting adjustments designed to improve the degree to which ILINet and FluSurvNET data reflect influenza activity (GBQ-no-reporting-adj) and a variation that does not use a fourth-root transform (GBQ-no-transform), along with the original GBQ model which uses the reporting adjustments and the fourth-root transform. The percent of all combinations of location, reference date, and horizon for which the given model submitted forecasts is shown in the ``\\% Submitted\" column; in these retrospective experiments, we produced forecasts for all locations and time points. Within each experiment group, results for the model with the best MWIS, RWIS, MAE, and RAE are highlighted. Results for the models where empirical PI coverage rates are closest to the nominal levels are highlighted."),
   bold_modelnames = FALSE
 )
-print(preprocessing_scores_table,
-      include.rownames = FALSE, sanitize.text.function = function(x) {x})
+table_2c <- capture.output(
+  print(preprocessing_scores_table,
+        include.rownames = FALSE, sanitize.text.function = function(x) {x})
+)
+
+table_2c <- c(
+  "\\\\",
+  "\\multicolumn{8}{l}{Experiment C: Data preprocessing} \\\\",
+  table_2c[6:17]
+)
+
+table_2 <- c(table_2a, table_2b, table_2c)
+cat(table_2, sep = "\n")
 @
 
 \section*{Acknowledgements}
