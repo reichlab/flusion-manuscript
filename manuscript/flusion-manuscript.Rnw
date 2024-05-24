@@ -145,6 +145,7 @@ The primary GBM model is fit to the following 114 features:
 \item The values all features from points 6, 7, and 8 at lags 1 and 2, representing estimates of the local level and first and second derivatives of the signal in each of the previous two weeks.
 \item The forecast horizon.
 \end{enumerate}
+TODO: plot of local deriv. features
 
 Measures of the local level of the surveillance signal (i.e., rolling means and the intercepts of Taylor polynomial fits) had a high feature importance in the primary GBM model; see section *** below for more detail.  Starting the week of ***, we fit a second variation on the GBM model that was not allowed to see these ``local level" features. This was motivated by two considerations: (1) a model fit without features that had high importance in the primary GBM model might introduce more model diversity to the flusion ensemble; and (2) in seasons with particularly high or low incidence, measures of local level might not be a reliable indicator of the magnitude and direction of changes in future values.
 
@@ -227,7 +228,7 @@ overall_scores <- read_csv("../artifacts/scores/scores_by_model_flusight_all.csv
   ) |>
   mutate(Model = model_anon)
 
-make_scores_table <- function(scores, caption, bold_modelnames = TRUE) {
+make_scores_table <- function(scores, caption, label, bold_modelnames = TRUE) {
   scores_table <- scores |>
     mutate(Model = Model,
            `\\% Submitted` = prop * 100,
@@ -241,7 +242,7 @@ make_scores_table <- function(scores, caption, bold_modelnames = TRUE) {
     arrange(RWIS) |>
     xtable::xtable(
       caption = caption,
-      label = "tab:scores_flusight")
+      label = label)
 
   digits(scores_table) <- c(0, 0, 1, 1, 3, 1, 3, 3, 3)
 
@@ -284,7 +285,8 @@ make_scores_table <- function(scores, caption, bold_modelnames = TRUE) {
 
 overall_scores_table <- make_scores_table(
   overall_scores,
-  caption = paste("Overall evaluation results for forecasts submitted to the FluSight Forecast Hub. Model names other than \\textbf{Flusion}, \\textbf{FluSight-ensemble}, \\textbf{Baseline-flat}, and \\textbf{Baseline-trend} are anonymized. The percent of all combinations of location, reference date, and horizon for which the given model submitted forecasts is shown in the ``\\% Submitted\" column; only models submitting at least 2/3 of forecasts were included. Results for the model with the best MWIS, RWIS, MAE, and RAE are highlighted. Results for the models where empirical PI coverage rates are closest to the nominal levels are highlighted.")
+  caption = paste("Overall evaluation results for forecasts submitted to the FluSight Forecast Hub. Model names other than \\textbf{Flusion}, \\textbf{FluSight-ensemble}, \\textbf{Baseline-flat}, and \\textbf{Baseline-trend} are anonymized. The percent of all combinations of location, reference date, and horizon for which the given model submitted forecasts is shown in the ``\\% Submitted\" column; only models submitting at least 2/3 of forecasts were included. Results for the model with the best MWIS, RWIS, MAE, and RAE are highlighted. Results for the models where empirical PI coverage rates are closest to the nominal levels are highlighted."),
+  label = "tab:scores_flusight"
 )
 
 print(overall_scores_table,
@@ -310,7 +312,7 @@ In this section, we investigate the degree to which the following aspects of the
 
 \subsection{Component models and ensembling}
 
-To investigate the skill of our individual component models and the added value of ensembling, we computed scores for each of the three component models that were members of the Flusion ensemble and for ensembles formed using two of the three components.  As documented in section \ref{sec:model} the component models and ensembling method that we used in real time changed over the course of the season. To enable a clearer understanding of the contributions of these models, the results we present here are based on the specifications of the individual GBQ, GBQ-no-level, and ARX models and the quantile averaging ensemble method that were used for the Flusion model starting the week of December 2, 2023.  In instances where predictions from one or more component models were not created in real time, we created post hoc model fits and predictions using the data that would have been available in real time.
+To investigate the skill of our individual component models and the added value of ensembling, we computed scores for each of the three component models that were members of the Flusion ensemble and for ensembles formed using two of the three components.  As documented in section \ref{sec:model}, the component models and ensembling method that we used in real time changed over the course of the season. To enable a clearer understanding of the contributions of these models, the results we present here are based on the specifications of the individual GBQ, GBQ-no-level, and ARX models and the quantile averaging ensemble method that were used for the Flusion model starting the week of December 2, 2023.  In instances where predictions from one or more component models were not created in real time, we created post hoc model fits and predictions using the data that would have been available in real time.
 
 
 <<posthoc-scores, results='asis'>>=
@@ -331,6 +333,7 @@ component_scores <- read_csv("../artifacts/scores/scores_by_model_flusion_compon
 component_scores_table <- make_scores_table(
   component_scores,
   caption = NULL,
+  label = "junk label",
   bold_modelnames = FALSE
 )
 table_2a <- capture.output(
@@ -356,6 +359,7 @@ joint_training_scores <- read_csv("../artifacts/scores/scores_by_model_joint_tra
 joint_training_scores_table <- make_scores_table(
   joint_training_scores,
   caption = NULL,
+  label = "junk label",
   bold_modelnames = FALSE
 )
 table_2b <- capture.output(
@@ -381,6 +385,7 @@ preprocessing_scores <- read_csv("../artifacts/scores/scores_by_model_flusion_da
 preprocessing_scores_table <- make_scores_table(
   preprocessing_scores,
   caption = paste("Evaluation results for post hoc experiments investigating determinants of model performance.  Experiment A gives results for individual component models in the Flusion ensemble, ensembles of pairs of components, and the full Flusion ensemble including all three components.  Experiment B gives results for the GBQ model, which is trained jointly on data for all locations and data sources, and variations trained separately for each location (GBQ-by-location) and trained only on hospital admissions from NHSN (GBQ-only-NHSN).  Experiment C gives results for a variation on the GBQ model that does not incorporate reporting adjustments designed to improve the degree to which ILINet and FluSurvNET data reflect influenza activity (GBQ-no-reporting-adj) and a variation that does not use a fourth-root transform (GBQ-no-transform), along with the original GBQ model which uses the reporting adjustments and the fourth-root transform. The percent of all combinations of location, reference date, and horizon for which the given model submitted forecasts is shown in the ``\\% Submitted\" column; in these retrospective experiments, we produced forecasts for all locations and time points. Within each experiment group, results for the model with the best MWIS, RWIS, MAE, and RAE are highlighted. Results for the models where empirical PI coverage rates are closest to the nominal levels are highlighted."),
+  label = "tab:scores_experiments",
   bold_modelnames = FALSE
 )
 table_2c <- capture.output(
@@ -397,6 +402,42 @@ table_2c <- c(
 table_2 <- c(table_2a, table_2b, table_2c)
 cat(table_2, sep = "\n")
 @
+
+Although two of the ensembles outperformed the GBQ model alone, the most important determinant of performance was whether or or not the GBQ model was included (Table \ref{tab:scores_experiments}, Experiment A). Score differences among the top four model variations were small, and all of those model variations included the GBQ model. There was a drop-off in performance for other variations that did not include GBQ. Thus, the fact that Flusion was constructed as an ensemble of three models was not a key driver of its performance. Indeed, GBQ alone and GBQ-no-level alone would each have placed first among all FluSight submissions, while ARX would have placed third among all contributing models.
+
+The GBQ-no-level model, which was trained without access to features measuring the local level of the time series, had worse performance than the primary GBQ model, and ensembles that included it generally performed slightly worse than ensembles that did not include it. We view this as evidence that the approach of omitting local level features was harmful to individual model performance without introducing enough differentiation from the primary GBQ model to serve as a useful ensemble member. In contrast, although ARX was the worst individual model, ensemble variations that included ARX were slightly better than ensemble variations that did not include it. Including models with more structural differences can be helpful in an ensemble, although in these results the gains in performance from including ARX were generally small.
+
+\subsection{Joint training on multiple data sets and multiple locations}
+
+The primary GBQ model was trained jointly on data from all three surveillance signals (NHSN, ILINet, and FluSurv) and on data for all locations at the state, HHS regional, and US national level. To investigate the value of this joint model training approach, we considered two alternative methods:
+\begin{enumerate}
+\item The GBQ-only-NHSN model was trained on data for all locations, but using only hospital admissions from NHSN, the surveillance signal used as the prediction target.
+\item The GBQ-by-location model was trained separately for each state-level jurisdiction using data for that location from all three data sources.
+\end{enumerate}
+
+Both of these alternatives underperformed relative to the GBQ model (Table \ref{tab:scores_experiments}, Experiment B). GBQ-by-location would have been among the top three contributing models to the forecast hub, and GBQ-only-NHSN would have been among the top ten contributing models; however, both would have underperformed relative to the FluSight ensemble. The decisions to train on multiple data sources and to train jointly on data for all locations were critical for achieving strong model performance.
+
+\subsection{Data preprocessing}
+
+In a third experiment, we fit two model variations to investigate the value of some of the data preprocessing steps we used.  The GBQ-no-reporting-adj model omitted the adjustments described in Section \ref{sec:data} that were intended to address reporting inconsistencies in the ILINet and FluSurvNET data. Specifically, this model used the ILI signal directly rather than using test positivity rates to convert to ILI+, and it used the raw rates reported by FluSurvNET rather than attempting to account for time-varying case capture rates in the FluSurvNET system. In our evaluations, GBQ-no-reporting-adj outperformed the original GBQ model by a small amount (Table \ref{tab:scores_experiments}, Experiment C). These reporting adjustments were not helpful to model performance, and indeed the evidence suggests that they were counterproductive.
+
+In a second model variation, we investigated whether or not the use of a fourth root data transform was helpful. The GBQ-no-transform model was fit to data without using a power transform, though other transformations described in section \ref{sec:data} were used, including converting hospital admission to a rate per 100,000 population and applying centering and scaling operations to make the data more comparable across different locations and data sources. The GBQ-no-transform model had slightly worse performance than the original GBQ model, indicating that the power transform was helpful (Table \ref{tab:scores_experiments}, Experiment C).
+
+We also investigated the feature importances. TODO
+
+\section{Discussion}
+
+contemporaneous use of multiple signals
+
+other possible signals -- quidel, insurance claims
+
+vaccine uptake and efficacy
+
+better handling of holiday effects and the possibility of a second peak
+
+flu strain data -- how to use, laggy?
+
+improvements to ARX model
 
 \section*{Acknowledgements}
 
