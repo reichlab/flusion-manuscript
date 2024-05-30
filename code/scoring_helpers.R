@@ -1,4 +1,4 @@
-#' Combine forecast and target data 
+#' Combine forecast and target data
 merge_data_for_su <- function(forecasts, target_data, models_to_keep) {
   data_for_su <- forecasts |>
     dplyr::left_join(
@@ -9,7 +9,7 @@ merge_data_for_su <- function(forecasts, target_data, models_to_keep) {
     dplyr::rename(quantile_level = output_type_id, predicted = value,
                   model = "model_id") |>
     dplyr::mutate(quantile_level = as.numeric(quantile_level))
-  
+
   return(data_for_su)
 }
 
@@ -41,11 +41,13 @@ compute_summarized_scores <- function(raw_scores, by, data_for_su,
     scoringutils::add_relative_skill(
       by = by,
       metric = "wis",
-      baseline = "FluSight-baseline") |>
+      baseline = "FluSight-baseline"
+    ) |>
     scoringutils::add_relative_skill(
       by = by,
       baseline = "FluSight-baseline",
-      metric = "ae_median") |>
+      metric = "ae_median"
+    ) |>
     scoringutils::summarise_scores(by = by) |>
     scoringutils::summarise_scores(
       by = by,
@@ -63,8 +65,6 @@ compute_summarized_scores <- function(raw_scores, by, data_for_su,
   return(summarized_scores)
 }
 
-
-
 #' Helper function to compute score summaries
 compute_scores <- function(
     forecasts, target_data,
@@ -76,7 +76,8 @@ compute_scores <- function(
         scoringutils::run_safely(..., interval_range = 95,
                                  fun = scoringutils::interval_coverage)
       },
-      ae_median = scoringutils::ae_median_quantile),
+      ae_median = scoringutils::ae_median_quantile
+    ),
     by = list(
       "model",
       c("model", "reference_date", "horizon")
@@ -109,4 +110,31 @@ compute_scores <- function(
   )
 
   return(summarized_scores)
+}
+
+
+#' get combinations of location and forecast date for which the target data
+#' available as of that forecast date were subsequently revised
+#' Note: these are reference dates where the data on the date one week prior
+#' experienced a revision
+get_ref_date_loc_revised <- function() {
+  target_data <- readr::read_csv("artifacts/target_data.csv") |>
+    dplyr::select(date, location, location_name, value, weekly_rate)
+  initial_target_data <- readr::read_csv("artifacts/initial_target_data.csv")
+
+  location_dates_revised <- initial_target_data |>
+    dplyr::rename(initial_value = inc) |>
+    dplyr::left_join(
+      target_data,
+      by = c("location", "date")
+    ) |>
+    dplyr::mutate(
+      reference_date = date + 7,
+      revision_size = abs(value - initial_value),
+      revision_prop = revision_size / (value + 1),
+      revision_prop2 = revision_size / (initial_value + 1)
+    ) |>
+    dplyr::filter(revision_size >= 10)
+
+  return(location_dates_revised)
 }
