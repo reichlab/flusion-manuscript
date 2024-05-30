@@ -14,7 +14,7 @@ To build this project, you will need the following supporting repositories to be
 
 ### Docker
 
-We use Docker.  To build the Docker image, use the following command from the parent directory of the `flusion-manuscript` repository. That is, you should be in a directory that contains `flusion-manuscript`, `flusion`, and `FluSight-forecast-hub`.
+To use Docker, first ensure that you have it [installed](https://docs.docker.com/engine/install/), noting that on a Windows or Mac machine you will want to install Docker Desktop.  To build the Docker image, use the following command from the parent directory of the `flusion-manuscript` repository. That is, you should be in a directory that contains `flusion-manuscript`, `flusion`, and `FluSight-forecast-hub`.
 
 ```bash
 docker build -f flusion-manuscript/Dockerfile -t flusionmanu .
