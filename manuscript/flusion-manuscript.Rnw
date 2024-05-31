@@ -97,19 +97,38 @@ Relevant literature to review, ~1 paragraph each:
 \section{Data Sources}
 \label{sec:data}
 
-Our model uses influenza data from four data sources, which are combined to produce three signals measuring the intensity of influenza activity over time and space:
+Our model uses three measures of influenza activity (Figure \ref{fig:data_overview}):
 \begin{itemize}
-\item `NHSN`: Influenza hospital admissions as reported at the state level in a data set that is collected as part of the National Healthcare Safety Network (NHSN)
-\item `FluSurv`: 
-\item `ILI+`: An approximate measure of the proportion of outpatient doctor visits where the patient has influenza.  This is derived by combining measures of influenza-like illness from ILINet (defined symptomatically, may not be influenza) with influenza test positivity rates from WHO/NREVSS
+\item NHSN: Influenza hospital admissions as reported at the state level in a data set that is collected as part of the National Healthcare Safety Network (NHSN).
+\item FluSurv: Hospital admissions where the patient has a positive influenza test, expressed as a rate per 100,000 population in the catchment areas of specified hospital facilities as reported by FluSurv-NET.
+\item ILI+: An approximate measure of the proportion of outpatient doctor visits where the patient has influenza.  This is derived by combining data from ILINet and WHO/NREVSS.
 \end{itemize}
 
-Figure 1:
-\begin{itemize}
-\item original and adjusted data for selected locations
-\item transformed data, on same scale
-\end{itemize}
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=\textwidth]{../artifacts/figures/data_overview.pdf}
+    \caption{Influenza data at the national level in the US. The top panel shows weekly hospital admissions from NHSN, including the 2023/24 season that was the target season for predictions described in this article. In the second panel, a dashed orange line shows raw data reported from FluSurv-NET; the modeled data, in blue, are obtained by scaling up the raw data using per-season inflation factors designed to account for varing testing rates and test sensitivity/specificity.  In the third panel, a dashed orange line shows raw ILI data from ILINet; the modeled data in blue are ILI+ values obtained by combining ILI with test positivity rates. Grey shaded regions indicate pandemic seasons that were not used for model training; these include the 2008/09 and 2009/10 seasons which were impacted by pandemic swine influenza, and the 2020/21 and 2021/22 seasons which were impacted by low influenza activity during the COVID pandemic. Additionally, FluSurv-NET and ILI+ data for the 2023/24 season were not used for model training in this work.}
+    \label{fig:data_overview}
+\end{figure}
 
+The FluSurv and ILI+ signals we used both included adjustments designed to correct for known challenges with interpreting the data collected by FluSurv-NET and ILINet.  The FluSurv-NET data report on patients with a positive influenza test, and as such are subject to varying levels of underreporting depending on changing testing rates and test sensitivity and specificity from season to season.  The CDC produces annual estimates of hospital burden due to influenza that adjust for these factors (TODO: cite).  We used these total burden estimates to estimate season-specific inflation factors that scale up reported rates from FluSurv-NET, with the intent of producing a more consistent measure of influenza activity over time; see supplemental section TODO for more details.  These inflation factors were generally larger in earlier seasons than in later seasons, indicating that FluSurv-NET undercounted influenza activity more in early seasons than it did in later seasons.
+
+ILINet reports a measure of influenza-like illness (ILI), as the percent of outpatient doctor visits where the patient has symptoms consistent with influenza without another known cause. Because ILI is defined symptomatically, this signal generally includes some patients who have respiratory diseases other than influenza such as RSV and COVID. To address this, we compute ILI+ as the product of this ILI signal and influenza test positivity rates as reported by WHO and NREVSS (TODO, cite).  After converting to a proportion scale, ILI+ can be interpreted as an estimate of the proportion of outpatient doctor visits where the patient has influenza.
+
+Our models are fit to preprocessed versions of the surveillance data, with transformations designed to out the data on a similar scale for different surveillance signals and across different locations. Denote the value of a particular surveillance signal $s$ in location $l$ at time $t$ by $z_{l, s, t}$. We apply the following operations to compute the transformed version of the signal, $\tilde{z}_{l, w, t}$:
+\begin{enumerate}
+\item For NHSN admissions, we divide by the population of the location $l$ in units of 100,000 people to convert to a hospital admissions rate per 100,000 population, which is comparable across locations of different sizes. Note that the ILI+ and FluSurv signals are naturally expressed as rates or percents and so the magnitude of those signal does not depend on population size.
+\item We take a fourth root transformation to stabilize the variance of the signal across times of low and high influenza activity.
+\item We scale by dividing by the 95th percentile of all observations for each location and data source, and center by subtracting the mean for each location and data source.  These transformations adjust for varying magnitudes of the surveillance signals for different data sources and locations.
+\end{enumerate}
+The resulting transformed data used as an input to the model are shown in Figure \ref{fig:data_standardized}.
+
+\begin{figure}[!h]
+    \centering
+    \includegraphics[width=\textwidth]{../artifacts/figures/data_standardized.pdf}
+    \caption{Influenza data for all surveillance signals and all locations available for each data source after standardizing transformations have been applied. The top panel shows weekly hospital admissions from NHSN, the second panel shows data from FluSurv-NET, and the third panel shows ILI+. Within each panel, there is one line for each combination of season and location for all seasons and locations that are available for the given surveillance system at the state, regional, and national levels.  Line color corresponds to the population size of the location; the darkest lines are for the national level while the lightest lines are for states with small populations.}
+    \label{fig:data_standardized}
+\end{figure}
 
 \section{Model}
 \label{sec:model}
@@ -122,14 +141,7 @@ The GBM models learn a mapping from features $x_i$ to prediction target $y_i$, w
 
 The models are trained simultaneously for all locations, data sources, and forecast horizons.  However, the features $x_i$ contain information only about influenza activity for the particular location $l(i)$ and data source $s(i)$. We emphasize that inclusion of multiple locations and data sources in the training data set allows the model to use past examples from multiple locations and data sources to learn a mapping from $x$ to $y$, but in our model setup, predictions of NHSN admissions in a particular location are not informed by contemporaneous observations of NHSN admissions in other locations or by contemporaneous observations of other surveillance signals in that same location. The use of contemporaneous observations from other locations or signals to inform predictions remains a topic for future work.
 
-Both the features $x_i$ and the prediction targets $y_i$ are calculated based on a transformed version of the original surveillance signal. Denote the value of a particular surveillance signal $s$ in location $l$ at time $t$ by $z_{l, s, t}$. We apply the following operations to compute the transformed version of the signal, $\tilde{z}_{l, w, t}$:
-\begin{enumerate}
-\item For NHSN admissions, we divide by the population of the location $l$ in units of 100,000 people to convert to a hospital admissions rate per 100,000 population, which is comparable across locations of different sizes. The ILI+ and FluSurv signals are naturally expressed as rates or percents that are comparable across locations.
-\item We take a fourth root transformation to stabilize the variance of the signal across times of low and high influenza activity.
-\item We scale by dividing by the 95th percentile of all observations for each location and data source, and center by subtracting the mean for each location and data source.  These transformations adjust for varying magnitudes of the surveillance signals for different data sources and locations.
-\end{enumerate}
-The resulting transformed data used as an input to the model are shown in Figure ***.
-
+Both the features $x_i$ and the prediction targets $y_i$ are calculated based on a transformed version of the original surveillance signal. 
 The prediction target $y_i$ is the difference between the transformed signal value on the target date, $d(i) + h(i)$, and the date of the last available reported data. A prediction of this target is converted to a prediction on the original scale by adding the last observed value and inverting the initial data transformation operations described above.
 
 The primary GBM model is fit to the following 114 features:
@@ -147,31 +159,33 @@ The primary GBM model is fit to the following 114 features:
 \end{enumerate}
 TODO: plot of local deriv. features
 
-Measures of the local level of the surveillance signal (i.e., rolling means and the intercepts of Taylor polynomial fits) had a high feature importance in the primary GBM model; see section *** below for more detail.  Starting the week of ***, we fit a second variation on the GBM model that was not allowed to see these ``local level" features. This was motivated by two considerations: (1) a model fit without features that had high importance in the primary GBM model might introduce more model diversity to the flusion ensemble; and (2) in seasons with particularly high or low incidence, measures of local level might not be a reliable indicator of the magnitude and direction of changes in future values.
+Measures of the local level of the surveillance signal (i.e., rolling means and the intercepts of Taylor polynomial fits) had a high feature importance in the primary GBM model; see section \ref{sec:post-hoc-preprocessing} below for more detail.  Starting the week of TODO, we fit a second variation on the GBM model that was not allowed to see these ``local level" features. This was motivated by two considerations: (1) a model fit without features that had high importance in the primary GBM model might introduce more model diversity to the flusion ensemble; and (2) in seasons with particularly high or low incidence, measures of local level might not be a reliable indicator of the magnitude and direction of changes in future values.
 
 \begin{itemize}
-\item supplemental figure showing some feature values from roll mean, taylor coefs
+\item supplemental figure showing some feature values from roll mean, taylor coefs.  Figures similar to what's shown at \url{https://github.com/reichlab/timeseriesutils/blob/main/docs/demo.ipynb}
 \end{itemize}
 
 \subsection{Component Model 3: ARX}
 
-We have implemented a seasonal auto-regressive integrated time series model with external covariates (SARIX). Development of this model is in progress, and we have not carefully evaluated many of the modeling decisions that have been made for this component. Here we describe the state of the model as it was used for real-time forecasting during the 2023/34 influenza season; there are many potential refinements to this model setup, but those extensions are deferred to future work.
+We have implemented An auto-regressive time series model with external covariates (ARX). Development of this model is in progress, and we have not carefully evaluated many of the modeling decisions that have been made for this component. Here we describe the state of the model as it was used for real-time forecasting during the 2023/34 influenza season; we are actively pursuing refinements to this model setup, but a description of those extensions is deferred to future work.
 
-The ARX model is trained jointly on data for all locations and all influenza signals (NHSN, ILI+, and FluSurv). However, as with the GBM models, the ILI+ and FluSurv signals are not used as real-time covariates measuring trends in influenza prevalence in the current season to inform NHSN predictions. Rather, those signals are used to provide additional training data to help inform estimation of parameters describing influenza dynamics. Our single covariate is a spike function indicating proximity to the week of Christmas, taking the value 
+The ARX model is trained jointly on data for all locations and all influenza signals (NHSN, ILI+, and FluSurv) [TODO double-check this -- i thought i fit to all signals, but i see a comment saying i did not]. However, as with the GBM models, the ILI+ and FluSurv signals are not used as real-time covariates measuring trends in influenza prevalence in the current season to inform NHSN predictions. Rather, those signals are used to provide additional training data to help inform estimation of parameters describing influenza dynamics. Our single covariate is a spike function indicating proximity to the week of Christmas, taking the value 
 
 It is worth highlighting a few ways in which our ARX model differs from standard implementations. In our setup, the autoregressive coefficients are shared across locations and datasets, while each location is assigned a separate variance parameter for innovations. Additionally, unlike many ARX model specifications, our model does not take future values of the covariates as known, but rather it predicts those covariates alongside the primary prediction target. In our current modeling setting, this behavior is not ideal; remedying this to allow for the provision of known future values of covariates is on a short list of model improvements to make.
 
 \begin{enumerate}
-\item We take a Bayesian approach
+\item We take a Bayesian approach with a shrinkage prior on the AR coefficients.
 \end{enumerate}
 
+TODO write up model specification
 
 \subsection{Ensembling Methods: Quantile averaging and linear pools}
 
-
+TODO, we mostly did quantile averaging.  sometimes i used a linear pool when i didn't trust the latest data report.
 
 \subsection{Model adjustments used for real time forecasts}
 
+TODO, we tried a few different model variations over the course of the season.  To pull from \url{https://github.com/cdcepi/FluSight-forecast-hub/blob/main/model-metadata/UMass-flusion.yml}
 
 \section{Evaluation metrics}
 \label{sec:eval-metrics}
@@ -212,7 +226,7 @@ Aggregating across all forecast dates and forecast horizons, the Flusion model h
  
 Prediction intervals from the Flusion model tended to be underconfident, i.e., prediction intervals were too wide on average (Table \ref{tab:scores_flusight}). An examination of one-sided quantile coverage rates indicates that marginally, the predictive quantiles in the upper tail of the forecast distribution are fairly well calibrated, while predictions for the lower quantile levels were too small on average (Figure \ref{fig:scores_flusight} (c)). Overall, the probabilistic calibration of the Flusion model was comparable to or better than that of other models contributed to the Hub, and it was superior to the calibration of the baseline and ensemble models.
 
-TODO: Supplemental analysis with similar results, omitting forecasts affected by data revisions?
+TODO: Supplemental analysis with similar results, omitting forecasts affected by data revisions.  Rankings don't change much.
 
 
 
@@ -417,26 +431,33 @@ The primary GBQ model was trained jointly on data from all three surveillance si
 Both of these alternatives underperformed relative to the GBQ model (Table \ref{tab:scores_experiments}, Experiment B). GBQ-by-location would have been among the top three contributing models to the forecast hub, and GBQ-only-NHSN would have been among the top ten contributing models; however, both would have underperformed relative to the FluSight ensemble. The decisions to train on multiple data sources and to train jointly on data for all locations were critical for achieving strong model performance.
 
 \subsection{Data preprocessing}
+\label{sec:post-hoc-preprocessing}
 
 In a third experiment, we fit two model variations to investigate the value of some of the data preprocessing steps we used.  The GBQ-no-reporting-adj model omitted the adjustments described in Section \ref{sec:data} that were intended to address reporting inconsistencies in the ILINet and FluSurvNET data. Specifically, this model used the ILI signal directly rather than using test positivity rates to convert to ILI+, and it used the raw rates reported by FluSurvNET rather than attempting to account for time-varying case capture rates in the FluSurvNET system. In our evaluations, GBQ-no-reporting-adj outperformed the original GBQ model by a small amount (Table \ref{tab:scores_experiments}, Experiment C). These reporting adjustments were not helpful to model performance, and indeed the evidence suggests that they were counterproductive.
 
 In a second model variation, we investigated whether or not the use of a fourth root data transform was helpful. The GBQ-no-transform model was fit to data without using a power transform, though other transformations described in section \ref{sec:data} were used, including converting hospital admission to a rate per 100,000 population and applying centering and scaling operations to make the data more comparable across different locations and data sources. The GBQ-no-transform model had slightly worse performance than the original GBQ model, indicating that the power transform was helpful (Table \ref{tab:scores_experiments}, Experiment C).
 
-We also investigated the feature importances. TODO
+We also investigated feature importance as measured by the number of times each feature was used for the splitting criterion in a tree node in the gradient boosting fits for the GBQ model (Supplemental Figure TODO). For this investigation, we used a representative fit from the reference date of January 6, 2024. We averaged the importance score across the gradient boosting fits from all 100 bags and all 23 quantile levels.  The top five features were the current season week, the population of the target location, the most recent observation of the surveillance signal (after preprocessing transformations), the forecast horizon, and the difference between the current season week and Christmas week.  These were followed by a group of features that also had fairly high importance, primarily consisting of features measuring the local level, trend, and curvature of disease incidence, as well as an indicators of whether the location was Puerto Rico (which sees substantively different trends in influenza activity than other locations), and indicators of what the data source was. A final group of features with lower importance included indicators for all other locations and indicators of the aggregation level for the location (state, regional, or national).
 
 \section{Discussion}
 
-contemporaneous use of multiple signals
+summary
+\begin{itemize}
+\item we won
+\item thing that mattered most was training jointly on data from multiple surveillance signals and locations
+\item other decisions had a more minor impact or were unhelpful: data transformations, attempting to correct for reporting artifacts, adding in ensemble members other than our main GBQR model.
+\end{itemize}
 
-other possible signals -- quidel, insurance claims
-
-vaccine uptake and efficacy
-
-better handling of holiday effects and the possibility of a second peak
-
-flu strain data -- how to use, laggy?
-
-improvements to ARX model
+next steps
+\begin{itemize}
+\item incorporating spatial dependence
+\item contemporaneous use of multiple signals
+\item other possible signals -- quidel, insurance claims
+\item vaccine uptake and efficacy
+\item better handling of holiday effects and the possibility of a second peak
+\item flu strain data -- how to use, laggy?
+\item improvements to ARX model
+\end{itemize}
 
 \section*{Acknowledgements}
 
