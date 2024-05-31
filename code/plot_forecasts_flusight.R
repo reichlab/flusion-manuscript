@@ -13,7 +13,7 @@ library(scales)
 source("code/utils.R")
 
 # number of locations to plot
-n_loc <- 5
+n_loc <- 6
 
 # load data
 target_data <- readr::read_csv("artifacts/target_data.csv")
@@ -141,8 +141,11 @@ p <- ggplot() +
   scale_y_continuous("Hospital admissions", labels = comma) +
   facet_grid(rows = vars(location_name), cols = vars(model), scales = "free_y") +
   theme_bw() +
-  theme(legend.position = "bottom")
+  theme(
+    legend.position = "bottom",
+    axis.text.x = element_text(angle = 20, hjust=1, vjust=1)
+  )
 
-pdf(file.path("artifacts/figures/forecasts_flusight.pdf"), width = 8, height = 6)
+pdf(file.path("artifacts/figures/forecasts_flusight.pdf"), width = 8, height = 6.5)
 print(p)
 dev.off()

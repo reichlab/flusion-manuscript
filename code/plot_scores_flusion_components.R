@@ -125,8 +125,3 @@ coverage_by_horizon <- ggplot(data = scores_by_model_horizon_date |>
   theme_bw()
 
 ggplotly(coverage_by_horizon)
-
-
-
-
-
