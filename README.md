@@ -34,6 +34,16 @@ docker run -it \
     flusionmanu Rscript code/compute_scores_joint_training.R
 ```
 
+The following knits the manuscript pdf (note that any updates to the pdf are persisted outside of the container):
+```bash
+docker run -it \
+    -v ./artifacts:/flusion-manuscript/artifacts \
+    -v ./manuscript:/flusion-manuscript/manuscript \
+    -w /flusion-manuscript/manuscript \
+    flusionmanu R -e "knitr::knit2pdf('flusion-manuscript.Rnw')"
+```
+
+
 ### Using `renv` without Docker
 
 We have not had good luck with using `renv` to get a stable development environment setup going across different machines, so we recommend using Docker as described above.  But if you want to try your luck, you can try to run the following command in an R session in this project:
