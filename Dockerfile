@@ -1,6 +1,7 @@
 FROM rocker/r-ver:4.4.0
 
 # install OS binaries required by R packages - via rocker-versioned2/scripts/install_tidyverse.sh
+# additionally, stuff for rendering tex
 RUN apt-get update
 RUN apt-get install -y --no-install-recommends \
     libxml2-dev \
@@ -21,7 +22,8 @@ RUN apt-get install -y --no-install-recommends \
     libjpeg-dev \
     unixodbc-dev \
     cmake \
-    awscli
+    awscli \
+    texlive-full
 
 
 # install required R packages using renv
