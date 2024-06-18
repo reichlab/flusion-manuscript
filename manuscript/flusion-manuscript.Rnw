@@ -26,9 +26,9 @@
 \def\elr#1{{\color{cyan}\textbf{ELR:[#1]}}}
 \def\ngr#1{{\color{blue}\textbf{NGR:[#1]}}}
 
-\usepackage{natbib}
-\bibliographystyle{unsrtnat-abbr}
-
+%\usepackage{natbib}
+\usepackage{biblatex} %Imports biblatex package
+\addbibresource{flusion.bib} %Import the bibliography file
 
 \title{Flusion: Integrating multiple data sources for accurate influenza predictions}
 \author{Evan L. Ray, possible additions include Nicholas G. Reich, Russ Wolfinger, Yijin Wang}
@@ -58,10 +58,11 @@ Starting with the 2021/22 influenza season, the forecasting targets for this cha
 Reporting of hospital admissions through NHSN began during the COVID pandemic, and as such NHSN has only a limited amount of historical data about influenza hospitalizations.
 To produce forecasts in the presence of limited data for the target surveillance system, we augmented these data with two signals that have a longer historical record: 1) ILI+, which estimates the proportion of outpatient doctor visits where the patient has influenza; and 2) rates of laboratory-confirmed influenza hospitalizations at a set of sentinel healthcare facilities.
 Our model, Flusion, is an ensemble model that combines a Bayesian autoregressive model with two machine learning models using gradient boosting for quantile regression based on different feature sets.
-All of these component models are trained on all three data signals.
-In each week of the influenza season, the models produce quantiles of a predictive distribution for influenza hospital admissions in each state in the current week and the following three weeks; the ensemble prediction is computed by averaging these predictions.
-Flusion emerged as a top-performing model in the CDC's influenza prediction challenge for the 2023/24 season.
-In this article, we elucidate the factors contributing to its success.
+The autoregressive model was trained on only data for the target surveillance signal, NHSN admissions, while the gradient boosting models were trained on all three data signals; all three models were trained jointly on data for multiple locations.
+In each week of the influenza season, the models produced quantiles of a predictive distribution for influenza hospital admissions in each state in the current week and the following three weeks; the ensemble prediction was computed by averaging these quantile predictions.
+Flusion emerged as the top-performing model in the CDC's influenza prediction challenge for the 2023/24 season, and in this article we investigate the factors contributing to its success.
+We find that the model's strong performance was primarily driven by the use of a gradient boosting model that was trained jointly on data from multiple surveillance signals and multiple locations.
+These results indicate the value of sharing information across multiple locations and surveillance signals, especially when doing so enlargens the pool of available data.
 \end{abstract}
 
 \section{Introduction}
@@ -113,7 +114,7 @@ Our model uses three measures of influenza activity (Figure \ref{fig:data_overvi
 
 The FluSurv and ILI+ signals we used both included adjustments designed to correct for known challenges with interpreting the data collected by FluSurv-NET and ILINet.  The FluSurv-NET data report on patients with a positive influenza test, and as such are subject to varying levels of underreporting depending on changing testing rates and test sensitivity and specificity from season to season.  The CDC produces annual estimates of hospital burden due to influenza that adjust for these factors (TODO: cite).  We used these total burden estimates to estimate season-specific inflation factors that scale up reported rates from FluSurv-NET, with the intent of producing a more consistent measure of influenza activity over time; see supplemental section TODO for more details.  These inflation factors were generally larger in earlier seasons than in later seasons, indicating that FluSurv-NET undercounted influenza activity more in early seasons than it did in later seasons.
 
-ILINet reports a measure of influenza-like illness (ILI), as the percent of outpatient doctor visits where the patient has symptoms consistent with influenza without another known cause. Because ILI is defined symptomatically, this signal generally includes some patients who have respiratory diseases other than influenza such as RSV and COVID. To address this, we compute ILI+ as the product of this ILI signal and influenza test positivity rates as reported by WHO and NREVSS (TODO, cite).  After converting to a proportion scale, ILI+ can be interpreted as an estimate of the proportion of outpatient doctor visits where the patient has influenza.
+ILINet reports a measure of influenza-like illness (ILI), as the percent of outpatient doctor visits where the patient has symptoms consistent with influenza without another known cause. Because ILI is defined symptomatically, this signal generally includes some patients who have respiratory diseases other than influenza such as RSV and COVID. To address this, we compute ILI+ as the product of this ILI signal and influenza test positivity rates as reported by laboratory testing sites reporting to World Health Organization (WHO) and National Respiratory Enteric Virus Surveillance System (NREVSS) systems.  After converting to a proportion scale, ILI+ can be interpreted as an estimate of the proportion of outpatient doctor visits where the patient has influenza, and has been used in previous forecasting work as a more specific measure of influenza activity than ILI \cite[e.g.][]{goldstein2011-predicting-epidemic-sizes-flu-strains, shaman2013-influenza-forecast-2012-2013}.
 
 Our models are fit to preprocessed versions of the surveillance data, with transformations designed to out the data on a similar scale for different surveillance signals and across different locations. Denote the value of a particular surveillance signal $s$ in location $l$ at time $t$ by $z_{l, s, t}$. We apply the following operations to compute the transformed version of the signal, $\tilde{z}_{l, w, t}$:
 \begin{enumerate}
@@ -463,6 +464,6 @@ next steps
 
 This work has been supported by the National Institutes of General Medical Sciences (R35GM119582) and the U.S. CDC(1U01IP001122). The content is solely the responsibility of the authors and does not necessarily represent the official views of NIGMS, the National Institutes of Health, or CDC.
 
-\bibliography{allocation}
+\printbibliography
 
 \end{document}

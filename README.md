@@ -40,7 +40,7 @@ docker run -it \
     -v ./artifacts:/flusion-manuscript/artifacts \
     -v ./manuscript:/flusion-manuscript/manuscript \
     -w /flusion-manuscript/manuscript \
-    flusionmanu R -e "knitr::knit2pdf('flusion-manuscript.Rnw')"
+    flusionmanu R -e "knitr::knit2pdf('flusion-manuscript.Rnw', bib_engine='biber')"
 ```
 
 
