@@ -36,7 +36,7 @@ docker run -it \
     flusionmanu Rscript code/compute_scores_joint_training.R
 ```
 
-The following runs one of the python scripts to make a plot:
+The following runs one of the python scripts to make a plot that is saved in `artifacts/figures/data_overview.pdf`:
 
 ```bash
 docker run -it \
