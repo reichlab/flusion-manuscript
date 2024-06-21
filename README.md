@@ -22,6 +22,7 @@ The following starts up a bash shell:
 docker run -it \
     -v ./artifacts:/flusion-manuscript/artifacts \
     -v ./manuscript:/flusion-manuscript/manuscript \
+    -v ./code:/flusion-manuscript/code \
     flusionmanu bash
 ```
 
@@ -31,7 +32,18 @@ The following runs one of the R scripts to compute scores:
 docker run -it \
     -v ./artifacts:/flusion-manuscript/artifacts \
     -v ./manuscript:/flusion-manuscript/manuscript \
+    -v ./code:/flusion-manuscript/code \
     flusionmanu Rscript code/compute_scores_joint_training.R
+```
+
+The following runs one of the python scripts to make a plot:
+
+```bash
+docker run -it \
+    -v ./artifacts:/flusion-manuscript/artifacts \
+    -v ./manuscript:/flusion-manuscript/manuscript \
+    -v ./code:/flusion-manuscript/code \
+    flusionmanu python3 code/plot_data.py
 ```
 
 The following knits the manuscript pdf (note that any updates to the pdf are persisted outside of the container):
@@ -39,6 +51,7 @@ The following knits the manuscript pdf (note that any updates to the pdf are per
 docker run -it \
     -v ./artifacts:/flusion-manuscript/artifacts \
     -v ./manuscript:/flusion-manuscript/manuscript \
+    -v ./code:/flusion-manuscript/code \
     -w /flusion-manuscript/manuscript \
     flusionmanu R -e "knitr::knit2pdf('flusion-manuscript.Rnw', bib_engine='biber')"
 ```
