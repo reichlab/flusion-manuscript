@@ -151,6 +151,7 @@ The primary GBM model is fit to the following 114 features:
 \item A one-hot encoding of the location.
 \item A one-hot encoding of the spatial scale of the location ("state", "region", or "national").
 \item The population of the location.
+\item The week of the season with the most recent reported data 
 \item The difference between the week of the season with the most recent reported data and Christmas week; for instance, a value of 3 means that the most recent data report are for the week three weeks after Christmas.
 \item The coefficients of a degree 2 Taylor polynomial fit to the trailing $w$ weeks of data, where $w \in \{4, 6\}$, with the reference point for the polynomial set to the time $d(i)$.  These coefficients are estimates of the local level, first derivative, and second derivative of the signal at the time $d(i)$.
 \item The coefficients of a degree 1 Taylor polynomial fit to the trailing $w$ weeks of data, where $w \in \{3, 5\}$. These coefficients are estimates of the local level and first derivative of the signal at the time $d(i)$.

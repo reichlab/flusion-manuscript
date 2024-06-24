@@ -14,7 +14,30 @@ docker build -t flusionmanu .
 
 Note that this builds a Docker image that includes static snapshots of the FluSight-forecast-hub repository and the flusion repository, which contain model output files that are used in the analyses for the manuscript.
 
-Now, with `flusion-manuscript` as your working directory, you can use that image to conduct analyses.
+Now, with `flusion-manuscript` as your working directory, you can use that image to conduct analyses, either using the workflows defined in the `makefile` or with one-off commands as documented in the following sections.
+
+#### Building the manuscript and all dependencies using `make`
+
+The project's `makefile` has been copied into the Docker image, and this can be used to build the manuscript using a reproducible workflow.  The makefile defines four targets which may be useful to someone who wants to build the manuscript:
+
+- `make all` builds both the manuscript and the supplement, including intermediate artifacts with plots and scores.
+- `make manuscript` build the manuscript and its dependencies
+- `make supplement` builds the supplement and its dependencies
+- `make clean` removes the built manuscript and supplement, and all intermediate artifacts with plots and scores. The primary use case of this command is to verify that the entire workflow is reproducible, since the next manuscript build will take some time to run to reproduce those intermediate artifacts.
+
+As an example, the following illustrates how to run `make all` within the container:
+
+```
+docker run -it \
+	-v ./artifacts:/flusion-manuscript/artifacts \
+    -v ./manuscript:/flusion-manuscript/manuscript \
+    -v ./code:/flusion-manuscript/code \
+    flusionmanu make all
+```
+
+#### Running one-off commands within the Docker container 
+
+For development purposes, it may be helpful to run individual commands within the Docker container. We provide some examples below.
 
 The following starts up a bash shell:
 
@@ -55,7 +78,6 @@ docker run -it \
     -w /flusion-manuscript/manuscript \
     flusionmanu R -e "knitr::knit2pdf('flusion-manuscript.Rnw', bib_engine='biber')"
 ```
-
 
 ### Using `renv` without Docker
 

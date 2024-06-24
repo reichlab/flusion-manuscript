@@ -49,5 +49,8 @@ RUN pip3 install 'numpy==1.26.4' 'pandas==1.5.3' 'scipy==1.11.3' \
 RUN pip3 install git+https://github.com/reichlab/timeseriesutils.git@4019ee40270d28788165fa36d61bbe5b78bb5ef4
 RUN pip3 install /flusion/code/data-pipeline
 
+# copy in the makefile
+COPY ./makefile /flusion-manuscript/makefile
+
 # set working directory
 WORKDIR /flusion-manuscript
