@@ -14,7 +14,7 @@ docker build -t flusionmanu .
 
 Note that this builds a Docker image that includes static snapshots of the FluSight-forecast-hub repository and the flusion repository, which contain model output files that are used in the analyses for the manuscript.
 
-Now, with `flusion-manuscript` as your working directory, you can use that image to conduct analyses.
+Now, with `flusion-manuscript` as your working directory, you can use that image to conduct analyses (but see the next section for simplified commands to build the manuscript using `make`).
 
 The following starts up a bash shell:
 
@@ -72,3 +72,12 @@ renv::install("arrow", type = "source", rebuild = TRUE)
 ```
 
 You will also need to have local clones of the FluSight-forecast-hub and flusion repositories in the same folder as the flusion-manuscript repository.
+
+### Building the manuscript with `make`
+
+The makefile in this project root defines four commands that can be used to build the manuscript and the supplement:
+
+- `make all` builds both the manuscript and the supplement, including intermediate artifacts with plots and scores.
+- `make manuscript` build the manuscript and its dependencies
+- `make supplement` builds the supplement and its dependencies
+- `make clean` removes the built manuscript and supplement, and all intermediate artifacts with plots and scores. This should be used only to verify that the entire workflow is reproducible, since the next manuscript build will take some time to run.
