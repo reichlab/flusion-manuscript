@@ -57,12 +57,12 @@ Over the last ten years, the US Centers for Disease Control and Prevention (CDC)
 Starting with the 2021/22 influenza season, the forecasting targets for this challenge have been based on hospital admissions reported in the CDC’s National Healthcare Safety Network (NHSN) surveillance system.
 Reporting of hospital admissions through NHSN began during the COVID pandemic, and as such NHSN has only a limited amount of historical data about influenza hospitalizations.
 To produce forecasts in the presence of limited data for the target surveillance system, we augmented these data with two signals that have a longer historical record: 1) ILI+, which estimates the proportion of outpatient doctor visits where the patient has influenza; and 2) rates of laboratory-confirmed influenza hospitalizations at a set of sentinel healthcare facilities.
-Our model, Flusion, is an ensemble model that combines a Bayesian autoregressive model with two machine learning models using gradient boosting for quantile regression based on different feature sets.
-The autoregressive model was trained on only data for the target surveillance signal, NHSN admissions, while the gradient boosting models were trained on all three data signals; all three models were trained jointly on data for multiple locations.
-In each week of the influenza season, the models produced quantiles of a predictive distribution for influenza hospital admissions in each state in the current week and the following three weeks; the ensemble prediction was computed by averaging these quantile predictions.
-Flusion emerged as the top-performing model in the CDC's influenza prediction challenge for the 2023/24 season, and in this article we investigate the factors contributing to its success.
-We find that the model's strong performance was primarily driven by the use of a gradient boosting model that was trained jointly on data from multiple surveillance signals and multiple locations.
-These results indicate the value of sharing information across multiple locations and surveillance signals, especially when doing so enlargens the pool of available data.
+Our model, Flusion, is an ensemble model that combines two machine learning models using gradient boosting for quantile regression based on different feature sets with a Bayesian autoregressive model.
+The gradient boosting models were trained on all three data signals, while the autoregressive model was trained on only data for the target surveillance signal, NHSN admissions; all three models were trained jointly on data for multiple locations.
+In each week of the influenza season, these models produced quantiles of a predictive distribution for influenza hospital admissions in each state in the current week and the following three weeks; the ensemble prediction was computed by averaging these quantile predictions.
+Flusion emerged as the top-performing model in the CDC's influenza prediction challenge for the 2023/24 season.
+In this article we investigate the factors contributing to flusion's success, and we find that its strong performance was primarily driven by the use of a gradient boosting model that was trained jointly on data from multiple surveillance signals and multiple locations.
+These results indicate the value of sharing information across multiple locations and surveillance signals, especially when doing so enlargens the pool of available training data.
 \end{abstract}
 
 \section{Introduction}
@@ -98,12 +98,7 @@ Relevant literature to review, ~1 paragraph each:
 \section{Data Sources}
 \label{sec:data}
 
-Our model uses three measures of influenza activity (Figure \ref{fig:data_overview}):
-\begin{itemize}
-\item NHSN: Influenza hospital admissions as reported at the state level in a data set that is collected as part of the National Healthcare Safety Network (NHSN).
-\item FluSurv: Hospital admissions where the patient has a positive influenza test, expressed as a rate per 100,000 population in the catchment areas of specified hospital facilities as reported by FluSurv-NET.
-\item ILI+: An approximate measure of the proportion of outpatient doctor visits where the patient has influenza.  This is derived by combining data from ILINet and WHO/NREVSS.
-\end{itemize}
+Our model uses three measures of influenza activity (Figure \ref{fig:data_overview}). The first of these is weekly influenza hospital admissions reported to the National Healthcare Safety Network (NHSN), which is the target signal for the FluSight forecasting exercise (see section \ref{sec:flusight} for more detail). Reporting of hospital admissions through NHSN began in 2020, and the first two years of reporting for this signal show very low influenza activity during the COVID-19 pandemic. As a result, at the start of the 2023/24 season, this signal had only one season's worth of data showing patterns typical of seasonal influenza.
 
 \begin{figure}[!h]
     \centering
@@ -112,13 +107,53 @@ Our model uses three measures of influenza activity (Figure \ref{fig:data_overvi
     \label{fig:data_overview}
 \end{figure}
 
-The FluSurv and ILI+ signals we used both included adjustments designed to correct for known challenges with interpreting the data collected by FluSurv-NET and ILINet.  The FluSurv-NET data report on patients with a positive influenza test, and as such are subject to varying levels of underreporting depending on changing testing rates and test sensitivity and specificity from season to season.  The CDC produces annual estimates of hospital burden due to influenza that adjust for these factors (TODO: cite).  We used these total burden estimates to estimate season-specific inflation factors that scale up reported rates from FluSurv-NET, with the intent of producing a more consistent measure of influenza activity over time; see supplemental section TODO for more details.  These inflation factors were generally larger in earlier seasons than in later seasons, indicating that FluSurv-NET undercounted influenza activity more in early seasons than it did in later seasons.
+To address this limitation of the target surveillance signal, our model uses two other measures of influenza activity that have a longer reporting history. The first of these is a measure of hospital admissions where the patient has a positive influenza test as reported by FluSurv-NET, expressed as a rate per 100,000 population in the catchment areas of selected sentinel hospital facilities (TODO: cite).
+The other signal is ILI+, which is an approximate measure of the proportion of outpatient doctor visits where the patient has influenza that is derived by combining data from ILINet and WHO/NREVSS (TODO: cite, cite).
 
-ILINet reports a measure of influenza-like illness (ILI), as the percent of outpatient doctor visits where the patient has symptoms consistent with influenza without another known cause. Because ILI is defined symptomatically, this signal generally includes some patients who have respiratory diseases other than influenza such as RSV and COVID. To address this, we compute ILI+ as the product of this ILI signal and influenza test positivity rates as reported by laboratory testing sites reporting to World Health Organization (WHO) and National Respiratory Enteric Virus Surveillance System (NREVSS) systems.  After converting to a proportion scale, ILI+ can be interpreted as an estimate of the proportion of outpatient doctor visits where the patient has influenza, and has been used in previous forecasting work as a more specific measure of influenza activity than ILI \cite[e.g.][]{goldstein2011-predicting-epidemic-sizes-flu-strains, shaman2013-influenza-forecast-2012-2013}.
+For both of these additional signals, we included adjustments designed to correct for known challenges with interpreting the data collected by FluSurv-NET and ILINet as consistent measures of influenza activity over time.  The FluSurv-NET data report on patients with a positive influenza test, and as such are subject to varying levels of underreporting depending on changing testing rates and test sensitivity and specificity from season to season.  The CDC produces annual estimates of hospital burden due to influenza that adjust for these factors (TODO: cite).  We used these total burden estimates to estimate season-specific inflation factors that scale up reported rates from FluSurv-NET, with the intent of producing a more consistent measure of influenza activity over time; see supplemental section TODO for more details.  These inflation factors were generally larger in earlier seasons than in later seasons, indicating that FluSurv-NET undercounted influenza activity more in early seasons than it did in later seasons.
 
-Our models are fit to preprocessed versions of the surveillance data, with transformations designed to out the data on a similar scale for different surveillance signals and across different locations. Denote the value of a particular surveillance signal $s$ in location $l$ at time $t$ by $z_{l, s, t}$. We apply the following operations to compute the transformed version of the signal, $\tilde{z}_{l, w, t}$:
+ILINet reports a measure of influenza-like illness (ILI), as the percent of outpatient doctor visits where the patient has symptoms consistent with influenza without another known cause. Because ILI is defined symptomatically, this signal generally includes some patients who have respiratory diseases other than influenza such as RSV and COVID. To address this, we compute ILI+ as the product of this ILI signal and influenza test positivity rates from laboratory testing sites reporting to World Health Organization (WHO) and National Respiratory Enteric Virus Surveillance System (NREVSS) systems.  After converting to a proportion scale, ILI+ can be interpreted as an estimate of the proportion of outpatient doctor visits where the patient has influenza, and has been used in previous forecasting work as a more specific measure of influenza activity than ILI \cite[e.g.][]{goldstein2011-predicting-epidemic-sizes-flu-strains, shaman2013-influenza-forecast-2012-2013}.
+
+\section{The FluSight collaborative forecasting exercise}
+\label{sec:flusight}
+
+For the 2023/24 season, the primary forecast target collected in the FluSight forecasting exercise was weekly hospital admissions with confirmed influenza as reported in the NHSN data set for the 50 US states, the District of Columbia, Puerto Rico, and in total at the national level (Figure \ref{fig:data_overview}, top panel). Predictions for a second target representing a categorical measure of the direction and magnitude of change in admissions were also collected by the hub, but we did not make predictions for that target with the Flusion model.
+
+Predictions were submitted to the FluSight hub on Wednesday each week. The week of submission is anchored relative to the Saturday after the submission date, which corresponds to the final day of that US epidemic week and is denoted as the \emph{reference date} for the predictions.
+Predictions were made for hospital admissions from Sunday to Saturday in the current week and each of the three following weeks, corresponding to forecast horizons of 0, 1, 2, and 3 weeks ahead relative to the week of submission. Initially, the hub also collected predictions at a horizon of -1, representing a ``hindcast" of admissions in the week before submission, but these hindcasts were discontinued a few weeks into the season and we do not analyze them here. A new data release from NHSN was made public at approximately noon on Wednesday each week including reported admissions up through the previous Saturday, and predictions were based on models fit to that data release. This data release was delayed by one day on the week ending on April 13, 2024, and for that week the forecast submission due date was extended so that the latest data could be used.
+
+For this hospital admissions target, probabilistic predictions were represented with a set of predictive quantiles at $K = 23$ quantile levels $\alpha_k$, corresponding to a predictive median and the endpoints of 11 central prediction intervals at the nominal 10\%, ..., 90\%, 95\%, and 98\% levels. For example, the predictive median corresponds to $\alpha_{12} = 0.5$ and the 98\% interval corresponds to predictive quantiles at the levels $\alpha_1 = 0.01$ and $\alpha_{23} = 0.99$.
+
+\section{Notation and evaluation metrics}
+
+We use $z_{s, l, t}$ to denote the observed value of surveillance signal $s$ (with $s = 1$ for NHSN data, $s = 2$ for FluSurv data, and $s = 3$ for ILI+ data) in location $l$ in the week ending on date $t$.  We denote the predictive quantile at level $\alpha_k$ for the value of the signal $s$ in location $l$, generated on reference date $d$ at forecast horizon $h$ by $q_{s,l,d,h,k}$.  Note that the observation at time $t$ is the prediction target across the four combinations of reference date $d$ and forecast horizon $h$ with $d + h = t$.
+
+In this manuscript, we evaluate forecasts using three metrics: the mean absolute error (MAE) of the predictive median, the mean weighted interval score (MWIS), and one-sided quantile coverage rates.
+
+MAE measures the average distance between the predictive median and the eventual observation.  Denoting the predictive median for location $l$, reference date $d$, and horizon $h$ by $m_{s, l, d, h} := q_{s, l, d, h, k=12}$, the absolute error is $\vert m_{s, l, d, h} - z_{s, l, d+h} \vert$.  The mean absolute error averages the absolute error across predictions for different locations, dates, and horizons.
+
+WIS can be viewed as a generalization of the absolute error to a set of quantile predictions, and is equivalent to an average of quantile scores (sometimes referred to as pinball losses) computed for each quantile prediction:
+\begin{align*}
+WIS(\{q_{s,l,d,h,k}: k = 1, \ldots, 23\}, z_{s,l,d+h}) &= \frac{asdf}{asdf} \sum_k QS_{\alpha_k}(q_{s,l,d,h,k}, z_{s,l,d+h}) \\
+QS_{\alpha_k}(q_{s,l,d,h,k}, z_{s,l,d+h}) &= ...
+\end{align*}
+
+The quantile score for a single quantile prediction assigns an asymmetric penalty to the distance between the prediction and the observation, with the magnitudes of the penalties for underprediction and overprediction set so that in expectation, the quantile score is minimized by the quantile of the predictive distribution at a specified quantile level. The quantile score for the quantile level 0.5 is equivalent to the absolute error.
+
+TODO formula for MAE and WIS
+
+We also compute relative versions of MAE and WIS.
+
+\section{Model}
+\label{sec:model}
+
+Our model was constructed as an ensemble of statistical and machine learning time series models.  We describe the component models in sections \ref{subsec:model_sarix} and \ref{subsec:model_gbm} and the ensemble methods in section \ref{subsec:methods_ensemble}.  The precise formulation of the models included in the ensemble and the ensembling methods varied slightly over the course of the season, and we describe these aspects of our setup for generating real-time predictions in section \ref{subsec:model_realtime}.
+
+\subsection{Data standarization}
+
+Our models are fit to preprocessed versions of the surveillance data, with transformations designed to put the data on a similar scale for different surveillance signals and across different locations. Denote the value of a particular surveillance signal $s$ in location $l$ at time $t$ by $z_{l, s, t}$. We apply the following operations to compute the transformed version of the signal, $\tilde{z}_{l, s, t}$:
 \begin{enumerate}
-\item For NHSN admissions, we divide by the population of the location $l$ in units of 100,000 people to convert to a hospital admissions rate per 100,000 population, which is comparable across locations of different sizes. Note that the ILI+ and FluSurv signals are naturally expressed as rates or percents and so the magnitude of those signal does not depend on population size.
+\item For NHSN admissions, we divide by the population of the location $l$ in units of 100,000 people to convert to a hospital admissions rate per 100,000 population, which is comparable across locations of different sizes. Note that the ILI+ and FluSurv signals are naturally expressed as rates or percents and so the magnitudes of those signals do not depend on population size.
 \item We take a fourth root transformation to stabilize the variance of the signal across times of low and high influenza activity.
 \item We scale by dividing by the 95th percentile of all observations for each location and data source, and center by subtracting the mean for each location and data source.  These transformations adjust for varying magnitudes of the surveillance signals for different data sources and locations.
 \end{enumerate}
@@ -127,25 +162,22 @@ The resulting transformed data used as an input to the model are shown in Figure
 \begin{figure}[!h]
     \centering
     \includegraphics[width=\textwidth]{../artifacts/figures/data_standardized.pdf}
-    \caption{Influenza data for all surveillance signals and all locations available for each data source after standardizing transformations have been applied. The top panel shows weekly hospital admissions from NHSN, the second panel shows data from FluSurv-NET, and the third panel shows ILI+. Within each panel, there is one line for each combination of season and location for all seasons and locations that are available for the given surveillance system at the state, regional, and national levels.  Line color corresponds to the population size of the location; the darkest lines are for the national level while the lightest lines are for states with small populations.}
+    \caption{Influenza data for all surveillance signals and all locations available for each data source after standardizing transformations have been applied. The top panel shows weekly hospital admissions from NHSN, the second panel shows data from FluSurv-NET, and the third panel shows ILI+. The horizontal axis is the season week. We define the season to begin on US Epidemic Week 31, which generally corresponds to early August; the range of season weeks shown corresponds approximately to the active flu season. Within each panel, there is one line for each combination of season and location for all seasons and locations that are available for the given surveillance system at the state, regional, and national levels.  Line color corresponds to the population size of the location; the darkest lines are for the national level while the lightest lines are for states with small populations.}
     \label{fig:data_standardized}
 \end{figure}
 
-\section{Model}
-\label{sec:model}
+\subsection{Component Models 1 and 2: GBQR}
 
-Our model was constructed as an ensemble of statistical time series and machine learning models.  We describe the component models in sections \ref{subsec:model_sarix} and \ref{subsec:model_gbm} and the ensemble methods in section \ref{subsec:methods_ensemble}.  The precise formulation of the models included in the ensemble and the ensembling methods varied slightly over the course of the season, and we describe these aspects of our setup for generating real-time predictions in section \ref{subsec:model_realtime}.
+The first two models use gradient boosting for quantile regression, which we abbreviate as GBQR.
+Specifically, we fit 23 quantile regression models, one for each required quantile level $\alpha_k, k = 1, \ldots, 23$, using the pinball loss as the learning objective.
+These models learn a mapping from features $x_i$ to the specified quantile of a predictive distribution for the target $y_i$, where $i$ indexes a combination of location $l(i)$, data source $s(i)$, the date with the most recent $d(i)$, and forecast horizon $h(i)$.  The models are fit using the LightGBM package in Python with default settings for all hyperparameters.  The final prediction at each quantile level is obtained using bagging, by taking the median of predictions from 100 separate fits where each fit is based on a randomly selected 70\% of the seasons in the training set (including partial data for the current season).
 
-\subsection{Component Models 1 and 2: GBM}
+The models are trained jointly on data for all locations, data sources, dates, and forecast horizons.  However, the features $x_i$ contain information only about influenza activity for the particular location $l(i)$ and data source $s(i)$. We emphasize that inclusion of multiple locations and data sources in the training data set allows the model to use past examples from multiple locations and data sources to learn a mapping from $x$ to $y$, but in our model setup, predictions of NHSN admissions in a particular location are not informed by contemporaneous observations of NHSN admissions in other locations or by contemporaneous observations of other surveillance signals in that same location. The use of contemporaneous observations from other locations or signals to inform predictions remains a topic for future work.
 
-The GBM models learn a mapping from features $x_i$ to prediction target $y_i$, where $i$ indexes a combination of location $l(i)$, data source $s(i)$, reference date $d(i)$, and forecast horizon $h(i)$.  Specifically, we fit 23 quantile regression models, one for each required quantile level $\alpha_k, k = 1, \ldots, 23$, using the pinball loss as the learning objective.  Models are fit using the LightGBM package in Python with default settings for all hyperparameters.  The final prediction at each quantile level is obtained using bagging, by taking the median of predictions from 100 separate fits, where each fit is based on a randomly selected 70\% of the seasons in the training set (including partial data for the current season).
+Both the features $x_i$ and the prediction targets $y_i$ are calculated based on the standardized version of the original surveillance signal, $\tilde{z}$ (see section \ref{sec:data}).
+The prediction target $y_i := \tilde{z}_{l(i), s(i), d(i) + h(i)} - \tilde{z}_{l(i), s(i), d(i)}$ is the difference between the transformed signal value on the target date, $d(i) + h(i)$, and the date of the last available reported data. A prediction of this target is converted to a prediction on the original scale by adding the last observed value ($\tilde{z}_{l(i), s(i), d(i)}$) and inverting the initial data transformation operations described in section \ref{sec:data}.
 
-The models are trained simultaneously for all locations, data sources, and forecast horizons.  However, the features $x_i$ contain information only about influenza activity for the particular location $l(i)$ and data source $s(i)$. We emphasize that inclusion of multiple locations and data sources in the training data set allows the model to use past examples from multiple locations and data sources to learn a mapping from $x$ to $y$, but in our model setup, predictions of NHSN admissions in a particular location are not informed by contemporaneous observations of NHSN admissions in other locations or by contemporaneous observations of other surveillance signals in that same location. The use of contemporaneous observations from other locations or signals to inform predictions remains a topic for future work.
-
-Both the features $x_i$ and the prediction targets $y_i$ are calculated based on a transformed version of the original surveillance signal. 
-The prediction target $y_i$ is the difference between the transformed signal value on the target date, $d(i) + h(i)$, and the date of the last available reported data. A prediction of this target is converted to a prediction on the original scale by adding the last observed value and inverting the initial data transformation operations described above.
-
-The primary GBM model is fit to the following 114 features:
+For the primary GBM model, the feature vector $x_i$ contains the following 114 features:
 \begin{enumerate}
 \item A one-hot encoding of the data source.
 \item A one-hot encoding of the location.
@@ -192,9 +224,6 @@ TODO, we tried a few different model variations over the course of the season.  
 \section{Evaluation metrics}
 \label{sec:eval-metrics}
 
-In the sections below, we evaluate forecasts using three metrics: the mean absolute error (MAE) of the predictive median, the weighted interval score (WIS), and one-sided quantile coverage rates. MAE measures the average distance between the predictive median and the eventual observation. WIS can be viewed as a generalization of the absolute error to a set of quantile predictions, and is equivalent to an average of quantile scores (sometimes referred to as pinball losses) computed for each quantile prediction. The quantile score for a single quantile prediction assigns an asymmetric penalty to the distance between the prediction and the observation, with the magnitudes of the penalties for underprediction and overprediction set so that in expectation, the quantile score is minimized by the quantile of the predictive distribution at a specified quantile level. The quantile score for the quantile level 0.5 is equivalent to the absolute error.
-
-We also compute relative versions of MAE and WIS.
 
 \section{Real-time performance: the 2023/24 season}
 \label{sec:real-time-results}
