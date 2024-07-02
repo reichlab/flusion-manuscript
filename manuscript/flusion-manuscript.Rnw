@@ -90,11 +90,9 @@ Relevant literature to review, ~1 paragraph each:
     \item Russ's paper
     \item M5 results paper
     \end{itemize}
-\item transfer learning/data fusion
-    \begin{itemize}
-    \item will need to look into options
-    \end{itemize}
 \end{itemize}
+
+The remainder of this article is structured as follows...
 
 \section{Data Sources}
 \label{sec:data}
@@ -156,17 +154,18 @@ where $\vert \mathcal{I} \vert$ is the size of the index set $\mathcal{I}$ and $
 \section{Model}
 \label{sec:model}
 
-Our model was constructed as an ensemble of statistical and machine learning time series models.  We describe the component models in sections \ref{subsec:model_sarix} and \ref{subsec:model_gbm} and the ensemble methods in section \ref{subsec:methods_ensemble}.  The precise formulation of the models included in the ensemble and the ensembling methods varied slightly over the course of the season, and we describe these aspects of our setup for generating real-time predictions in section \ref{subsec:model_realtime}.
+Our model was constructed as an ensemble of statistical and machine learning time series models.  All models are fit to data that have been preprocessed to standardize across different signals, locations, and time points, and we describe these preprocessing steps in section \ref{subsec:data_standardization}.  We describe the component models in sections \ref{subsec:model_gbqr} and \ref{subsec:model_arx} and the ensemble methods in section \ref{subsec:model_ensemble}.  The precise formulation of the models included in the ensemble and the ensembling methods varied slightly over the course of the season, and we describe these aspects of our setup for generating real-time predictions in section \ref{subsec:model_realtime}.
 
 \subsection{Data standarization}
+\label{subsec:data_standardization}
 
-Our models are fit to preprocessed versions of the surveillance data, with transformations designed to put the data on a similar scale for different surveillance signals and across different locations. Denote the value of a particular surveillance signal $s$ in location $l$ at time $t$ by $z_{l, s, t}$. We apply the following operations to compute the transformed version of the signal, $\tilde{z}_{l, s, t}$:
+Our models are fit to preprocessed versions of the surveillance data, with transformations designed to put the data on a similar scale for different surveillance signals and across different locations. Starting with the observed value $z_{s,l,t}$ of a particular surveillance signal $s$ in location $l$ at time $t$, we apply the following operations to compute the transformed version of the signal, $\tilde{z}_{s, l, t}$:
 \begin{enumerate}
 \item For NHSN admissions, we divide by the population of the location $l$ in units of 100,000 people to convert to a hospital admissions rate per 100,000 population, which is comparable across locations of different sizes. Note that the ILI+ and FluSurv signals are naturally expressed as rates or percents and so the magnitudes of those signals do not depend on population size.
 \item We take a fourth root transformation to stabilize the variance of the signal across times of low and high influenza activity.
 \item We scale by dividing by the 95th percentile of all observations for each location and data source, and center by subtracting the mean for each location and data source.  These transformations adjust for varying magnitudes of the surveillance signals for different data sources and locations.
 \end{enumerate}
-The resulting transformed data used as an input to the model are shown in Figure \ref{fig:data_standardized}.
+The resulting transformed data used as an input to the models are shown in Figure \ref{fig:data_standardized}.
 
 \begin{figure}[!h]
     \centering
@@ -175,16 +174,22 @@ The resulting transformed data used as an input to the model are shown in Figure
     \label{fig:data_standardized}
 \end{figure}
 
-\subsection{Component Models 1 and 2: GBQR}
+\subsection{Component Models 1 and 2: GBQR and GBQR-no\_level}
+\label{subsec:model_gbqr}
+
+TODO: update GBM to GBQR everywhere.
 
 The first two models use gradient boosting for quantile regression, which we abbreviate as GBQR.
-Specifically, we fit 23 quantile regression models, one for each required quantile level $\alpha_k, k = 1, \ldots, 23$, using the pinball loss as the learning objective.
-These models learn a mapping from features $x_i$ to the specified quantile of a predictive distribution for the target $y_i$, where $i$ indexes a combination of location $l(i)$, data source $s(i)$, the date with the most recent $d(i)$, and forecast horizon $h(i)$.  The models are fit using the LightGBM package in Python with default settings for all hyperparameters.  The final prediction at each quantile level is obtained using bagging, by taking the median of predictions from 100 separate fits where each fit is based on a randomly selected 70\% of the seasons in the training set (including partial data for the current season).
+Specifically, we use GBQR to obtain separate quantile regression fits for each required quantile level $\alpha_k$, using the average quantile loss $QS_{\alpha_k}$ as the learning objective.
+These models learn a mapping from features $x_i$ to the specified quantile of a predictive distribution for the target $y_i$, where $i$ indexes combinations of data source $s(i)$, location $l(i)$, reference date $d(i)$, and forecast horizon $h(i)$.  At each quantile level, the final prediction is obtained using bagging, by taking the median of predictive quantiles from 100 separate fits that are each based on a randomly selected 70\% of the seasons in the training set (including partial data for the current season).  The models are fit using the LightGBM package in Python (TODO: cite) with default settings for all hyperparameters.
 
-The models are trained jointly on data for all locations, data sources, dates, and forecast horizons.  However, the features $x_i$ contain information only about influenza activity for the particular location $l(i)$ and data source $s(i)$. We emphasize that inclusion of multiple locations and data sources in the training data set allows the model to use past examples from multiple locations and data sources to learn a mapping from $x$ to $y$, but in our model setup, predictions of NHSN admissions in a particular location are not informed by contemporaneous observations of NHSN admissions in other locations or by contemporaneous observations of other surveillance signals in that same location. The use of contemporaneous observations from other locations or signals to inform predictions remains a topic for future work.
+The models are trained jointly on data for all data sources, locations, dates, and forecast horizons.  However, the features $x_i$ contain information only about influenza activity for the particular data source $s(i)$ and location $l(i)$. Inclusion of multiple locations and data sources in the training data set allows the model to use past examples from multiple locations and data sources to learn a mapping from $x$ to $y$. However, in our model setup, predictions of NHSN admissions in a particular location are not informed by contemporaneous observations of NHSN admissions in other locations or by contemporaneous observations of other surveillance signals in that same location. The use of contemporaneous observations from other locations or signals to inform predictions remains a topic for future work.
 
 Both the features $x_i$ and the prediction targets $y_i$ are calculated based on the standardized version of the original surveillance signal, $\tilde{z}$ (see section \ref{sec:data}).
-The prediction target $y_i := \tilde{z}_{l(i), s(i), d(i) + h(i)} - \tilde{z}_{l(i), s(i), d(i)}$ is the difference between the transformed signal value on the target date, $d(i) + h(i)$, and the date of the last available reported data. A prediction of this target is converted to a prediction on the original scale by adding the last observed value ($\tilde{z}_{l(i), s(i), d(i)}$) and inverting the initial data transformation operations described in section \ref{sec:data}.
+As was described above, on reference date $d$ the most recent available data report on influenza activity in the previous week, $d-1$.
+For forecast task $i$ with reference date $d(i)$ and forecast horizon $h(i)$, we define the prediction target for this model to be $y_i := \tilde{z}_{l(i), s(i), d(i) + h(i)} - \tilde{z}_{l(i), s(i), d(i) - 1}$, the difference between the transformed signal value on the target date and on the date with most recent available reported data.
+Thus, the model is trained to predict the change in influenza activity over the next $h(i) + 1$ time steps.
+Predictions of this target are converted to the original scale by adding the last observed value ($\tilde{z}_{l(i), s(i), d(i) - 1}$) and inverting the initial data transformation operations described in section \ref{sec:data}.
 
 For the primary GBM model, the feature vector $x_i$ contains the following 114 features:
 \begin{enumerate}
@@ -193,42 +198,48 @@ For the primary GBM model, the feature vector $x_i$ contains the following 114 f
 \item A one-hot encoding of the spatial scale of the location ("state", "region", or "national").
 \item The population of the location.
 \item The week of the season with the most recent reported data 
-\item The difference between the week of the season with the most recent reported data and Christmas week; for instance, a value of 3 means that the most recent data report are for the week three weeks after Christmas.
-\item The coefficients of a degree 2 Taylor polynomial fit to the trailing $w$ weeks of data, where $w \in \{4, 6\}$, with the reference point for the polynomial set to the time $d(i)$.  These coefficients are estimates of the local level, first derivative, and second derivative of the signal at the time $d(i)$.
-\item The coefficients of a degree 1 Taylor polynomial fit to the trailing $w$ weeks of data, where $w \in \{3, 5\}$. These coefficients are estimates of the local level and first derivative of the signal at the time $d(i)$.
+\item The difference between the week of the season with the most recent reported data and Christmas week; for instance, a value of 3 means that the most recent data report is for the week three weeks after Christmas.
+\item The coefficients of a degree 2 Taylor polynomial fit to the trailing $w$ weeks of data, where $w \in \{4, 6\}$, with the reference point for the polynomial set to the time $d(i) - 1$ with the most recent reported data.  These coefficients are estimates of the local level, first derivative, and second derivative of the signal at the time $d(i) - 1$.
+\item The coefficients of a degree 1 Taylor polynomial fit to the trailing $w$ weeks of data, where $w \in \{3, 5\}$. These coefficients are estimates of the local level and first derivative of the signal at the time $d(i) - 1$.
 \item The rolling mean of the signal over the last $w$ weeks, where $w \in \{2, 4\}$.
 \item The values all features from points 6, 7, and 8 at lags 1 and 2, representing estimates of the local level and first and second derivatives of the signal in each of the previous two weeks.
 \item The forecast horizon.
 \end{enumerate}
-TODO: plot of local deriv. features
+The computation of features based on Taylor polynomials is described in more detail in Supplemental section TODO.
 
-Measures of the local level of the surveillance signal (i.e., rolling means and the intercepts of Taylor polynomial fits) had a high feature importance in the primary GBM model; see section \ref{sec:post-hoc-preprocessing} below for more detail.  Starting the week of TODO, we fit a second variation on the GBM model that was not allowed to see these ``local level" features. This was motivated by two considerations: (1) a model fit without features that had high importance in the primary GBM model might introduce more model diversity to the flusion ensemble; and (2) in seasons with particularly high or low incidence, measures of local level might not be a reliable indicator of the magnitude and direction of changes in future values.
-
-\begin{itemize}
-\item supplemental figure showing some feature values from roll mean, taylor coefs.  Figures similar to what's shown at \url{https://github.com/reichlab/timeseriesutils/blob/main/docs/demo.ipynb}
-\end{itemize}
+Measures of the local level of the surveillance signal (i.e., rolling means and the intercepts of Taylor polynomial fits) had a high feature importance in the primary GBM model; see section \ref{sec:post-hoc-preprocessing} below for more detail.  Starting the week of TODO, we fit a second variation on the GBM model that was not allowed to see these ``local level" features. This was motivated by two considerations: (1) a model fit without features that had high importance in the primary GBM model might introduce more model diversity to the flusion ensemble; and (2) in seasons with particularly high or low incidence, measures of local level might not be a reliable indicator of the magnitude and direction of changes in future values of influenza activity.
 
 \subsection{Component Model 3: ARX}
+\label{subsec:model_arx}
 
-We have implemented An auto-regressive time series model with external covariates (ARX). Development of this model is in progress, and we have not carefully evaluated many of the modeling decisions that have been made for this component. Here we describe the state of the model as it was used for real-time forecasting during the 2023/34 influenza season; we are actively pursuing refinements to this model setup, but a description of those extensions is deferred to future work.
+Our third component model is a Bayesian auto-regressive time series model with covariates (ARX). This model includes only one covariate: a spike function indicating proximity to the week of Christmas, taking the value 3 on Christmas week, 2 in the week before and the week after Christmas, 1 two weeks before and two weeks after Christmas, and 0 otherwise. This covariate is intended to help the model account for the consistent peak that is observed near the holiday.
 
-The ARX model is trained jointly on data for all locations and all influenza signals (NHSN, ILI+, and FluSurv) [TODO double-check this -- i thought i fit to all signals, but i see a comment saying i did not]. However, as with the GBM models, the ILI+ and FluSurv signals are not used as real-time covariates measuring trends in influenza prevalence in the current season to inform NHSN predictions. Rather, those signals are used to provide additional training data to help inform estimation of parameters describing influenza dynamics. Our single covariate is a spike function indicating proximity to the week of Christmas, taking the value 
+The ARX model is trained only on NHSN admissions, but as with the GBQR models, it is trained jointly on data for all locations. The autoregressive coefficients are shared across locations, while a separate variance parameter for the innovations is estimated for each location. Specifically, the model has the following structure, where we suppress the index $s$ and use $J$ to denote the autoregressive order (which we set to 8 in this work):
+\begin{align*}
+\tilde{Z}_{l,t} \mid \tilde{z}_{l, t - 1}, \ldots, \tilde{z}_{l, t - J}, x_{l, t - 1}, \ldots, x_{l, t - J}, \varepsilon_{l,t} &= \sum_{j = 1}^J \alpha_j \tilde{z}_{l, t - j} + \sum_{j = 1}^J \beta_j x_{l, t - j} + \varepsilon_{l, t} \\
+X_{l,t} \mid x_{l, t - 1}, \ldots, x_{l, t - J}, \nu_{l, t} &= \sum_{j = 1}^J \gamma_j x_{l, t - j} + \nu_{l, t} \\
+\varepsilon_{l, t} &\sim \text{Normal}(0, \sigma_{\varepsilon, l}) \\
+\nu_{l, t} &\sim \text{Normal}(0, \sigma_{\nu, l})
+\end{align*}
+The parameters $\sigma_{\varepsilon, l}$ and $\sigma_{\nu, l}$ are assigned independent Half-Cauchy priors, and all of the $\alpha_j$, $\beta_j$, and $\gamma_j$ parameters are given a shared hierarchical normal prior, $\alpha_j, \beta_j, \gamma_j \sim \text{Normal}(0, \xi)$ with a scale $\xi$ that follows a Half-Cauchy prior.
 
-It is worth highlighting a few ways in which our ARX model differs from standard implementations. In our setup, the autoregressive coefficients are shared across locations and datasets, while each location is assigned a separate variance parameter for innovations. Additionally, unlike many ARX model specifications, our model does not take future values of the covariates as known, but rather it predicts those covariates alongside the primary prediction target. In our current modeling setting, this behavior is not ideal; remedying this to allow for the provision of known future values of covariates is on a short list of model improvements to make.
+Note that unlike many ARX model specifications, our model does not take future values of the covariate $x_{l,t}$ as known, but rather it predicts the covariate alongside the primary prediction target. In our current modeling setting, where $x_{l, t}$ is a deterministic function of the season week, this behavior is likely not ideal. Remedying this to allow for the provision of known future values of covariates is on a short list of model improvements to make. Anecdotally, we noted that near Christmas week the model's predictions of the covariate $x$ captured the spike function's behavior.
 
-\begin{enumerate}
-\item We take a Bayesian approach with a shrinkage prior on the AR coefficients.
-\end{enumerate}
-
-TODO write up model specification
+The motivation for sharing the auto-regressive coefficients across locations was that this might help prevent the model from overfitting to a limited amount of training data.  With an autoregressive order of $J=8$, there are a total of 24 $\alpha$, $\beta$, and $\gamma$ parameters to estimate (and even if the values of the covariate were held fixed, there would be 16 $\alpha$ and $\beta$ parameters to estimate).  Estimating these parameters based on only a single past season of data for one location would likely be infeasible.  This motivation is similar to the strategy of joint estimation of shared parameters across multiple observed series that has been employed elsewhere, e.g. in the PatchTST model (TODO Cite). On the other hand, we felt that it was important to estimate separate variance parameters for different locations because the amount of noise in the observed data varies substantially across locations with small and large populations (Figure \ref{fig:data_standardized}).
 
 \subsection{Ensembling Methods: Quantile averaging and linear pools}
+\label{subsec:model_ensemble}
 
 TODO, we mostly did quantile averaging.  sometimes i used a linear pool when i didn't trust the latest data report.
 
 \subsection{Model adjustments used for real time forecasts}
+\label{subsec:model_realtime}
 
 TODO, we tried a few different model variations over the course of the season.  To pull from \url{https://github.com/cdcepi/FluSight-forecast-hub/blob/main/model-metadata/UMass-flusion.yml}
+
+\subsection{Software}
+
+TODO: Describe the software used: R, python, timeseriesutils, flusion, flusion-manuscript, sarix, reproducible workflow for rendering manuscript using Docker and Rnw.
 
 \section{Real-time performance: the 2023/24 season}
 \label{sec:real-time-results}
@@ -479,7 +490,7 @@ We also investigated feature importance as measured by the number of times each 
 
 summary
 \begin{itemize}
-\item we won
+\item we had top-ranked performance as measured by MAE and MWIS
 \item thing that mattered most was training jointly on data from multiple surveillance signals and locations
 \item other decisions had a more minor impact or were unhelpful: data transformations, attempting to correct for reporting artifacts, adding in ensemble members other than our main GBQR model.
 \end{itemize}
