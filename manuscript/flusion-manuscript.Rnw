@@ -5,6 +5,7 @@
 \usepackage{amsmath, amsfonts, amssymb}
 \usepackage{graphicx}
 \usepackage{bm}
+\usepackage{dsfont}
 \usepackage{hyperref}
 
 \usepackage{float}
@@ -126,23 +127,31 @@ For this hospital admissions target, probabilistic predictions were represented 
 
 \section{Notation and evaluation metrics}
 
-We use $z_{s, l, t}$ to denote the observed value of surveillance signal $s$ (with $s = 1$ for NHSN data, $s = 2$ for FluSurv data, and $s = 3$ for ILI+ data) in location $l$ in the week ending on date $t$.  We denote the predictive quantile at level $\alpha_k$ for the value of the signal $s$ in location $l$, generated on reference date $d$ at forecast horizon $h$ by $q_{s,l,d,h,k}$.  Note that the observation at time $t$ is the prediction target across the four combinations of reference date $d$ and forecast horizon $h$ with $d + h = t$.
+We use $z_{s, l, t}$ to denote the observed value of surveillance signal $s$ (with $s = 1$ for NHSN data, $s = 2$ for FluSurv data, and $s = 3$ for ILI+ data) in location $l$ in the week ending on date $t$.  We denote the predictive quantile at level $\alpha_k$ for the value of the signal $s$ in location $l$, generated on reference date $d$ at forecast horizon $h$ by $q_{s,l,d,h,k}$.  Note that the observation at time $t$ is the prediction target across the four combinations of reference date $d$ and forecast horizon $h$ with $d + h = t$.  For brevity, we will often use the index $i$ to denote a forecast task consisting of a combination of values of $s = s(i)$, $l = l(i)$, $d = d(i)$, and $h = h(i)$, with $q_{i,k}$ denoting the prediction at quantile level $\alpha_k$ for that task and $z_i$ denoting the corresponding observed value.
 
-In this manuscript, we evaluate forecasts using three metrics: the mean absolute error (MAE) of the predictive median, the mean weighted interval score (MWIS), and one-sided quantile coverage rates.
+In this manuscript, we evaluate forecasts using three metrics: the mean absolute error (MAE) of the predictive median, the mean weighted interval score (MWIS), and one-sided quantile coverage rates. Our evaluations of forecast skill cover only predictions of NHSN admissions ($s = 1$).
 
-MAE measures the average distance between the predictive median and the eventual observation.  Denoting the predictive median for location $l$, reference date $d$, and horizon $h$ by $m_{s, l, d, h} := q_{s, l, d, h, k=12}$, the absolute error is $\vert m_{s, l, d, h} - z_{s, l, d+h} \vert$.  The mean absolute error averages the absolute error across predictions for different locations, dates, and horizons.
+MAE measures the average distance between the predictive median and the eventual observation, with smaller values indicating better forecast accuracy.  Recalling that the predictive median corresponds to the quantile level $\alpha_{12} = 0.5$ (i.e., $k = 12$), the absolute error of the prediction for task $i$ is $\vert q_{i, 12} - z_{i} \vert$.  In our evaluations, the mean absolute error averages the absolute error across predictions for different locations, dates, and horizons.
 
 WIS can be viewed as a generalization of the absolute error to a set of quantile predictions, and is equivalent to an average of quantile scores (sometimes referred to as pinball losses) computed for each quantile prediction:
 \begin{align*}
-WIS(\{q_{s,l,d,h,k}: k = 1, \ldots, 23\}, z_{s,l,d+h}) &= \frac{asdf}{asdf} \sum_k QS_{\alpha_k}(q_{s,l,d,h,k}, z_{s,l,d+h}) \\
-QS_{\alpha_k}(q_{s,l,d,h,k}, z_{s,l,d+h}) &= ...
+WIS(\{q_{i,k}: k = 1, \ldots, K\}, z_{i}) &= \frac{1}{K} \sum_k 2 \cdot QS_{\alpha_k}(q_{i,k}, z_{i}) \\
+QS_{\alpha_k}(q_{i,k}, z_{i}) &= \alpha_k \max(z_{i} - q_{i,k}, 0) + (1 - \alpha_k) \max(q_{i,k} - z_{i}, 0)
 \end{align*}
+The quantile score for a single quantile prediction assigns an asymmetric penalty to the distance between the prediction and the observation, with the magnitudes of the penalties for underprediction and overprediction set so that in expectation, the quantile score is minimized by the quantile of the predictive distribution at a specified quantile level. The quantile score for the quantile level 0.5 is equal to one half of the absolute error of the median. Again, lower values of WIS indicate a better alignment of forecasts with the observed data. MWIS is the average WIS across multiple locations, dates, and horizons.
 
-The quantile score for a single quantile prediction assigns an asymmetric penalty to the distance between the prediction and the observation, with the magnitudes of the penalties for underprediction and overprediction set so that in expectation, the quantile score is minimized by the quantile of the predictive distribution at a specified quantile level. The quantile score for the quantile level 0.5 is equivalent to the absolute error.
+We also compute relative versions of MAE and MWIS, denoted rMAE and rMWIS, using the ``pairwise tournament'' approach outlined in \cite{cramer2022covidMortalityForecasts}. The primary purpose of this procedure is to correct for the varying level of difficulty of the predictions submitted by different forecasters in settings where some forecasters did not provide predictions for all locations or time points. This is relevant to the evaluation of submissions to the FluSight hub in section \ref{sec:real-time-results}, but in the experimental results in section \ref{sec:post-hoc-results} all forecasts were provided. A secondary goal is to standarize scores relative to a baseline model with known behavior, in our case the flat baseline described in section \ref{sec:real-time-results}. Smaller values of rMAE or rWIS value indicate better performance relative to the other models in the comparison pool, and in particular values less than 1 indicate performance better than the baseline.
 
-TODO formula for MAE and WIS
+In a comparison of forecast accuracy among $M$ models, computation of rMAE (rWIS) has two steps. First, we obtain a summary of the average performance for model $m$ relative to each other model $m'$, denoted $\theta^m$. This summary is computed as the geometric mean of the ratio of the MAE (MWIS) for model $m$ to the MAE (MWIS) for each other model $m'$, where for each model pair the MAE averages across the set $\mathcal{I}_{m, m'}$ of locations, dates, and forecast horizons for which both models submitted predictions. The rMAE (or rWIS) then normalizes this geometric mean relative to the value of $\theta^m$ for a baseline model:
+\begin{align*}
+rMAE^m &= \frac{\theta^m}{\theta^{baseline}}, \qquad
+\text{where } \theta^m = \left( \prod_{m' \neq m} \frac{MAE_{\mathcal{I}_{m, m'}}^m}{MAE_{\mathcal{I}_{m, m'}}^{m'}} \right)^{1/(M-1)}
+\end{align*}
+Here, $MAE_{\mathcal{I}}^m$ denotes the MAE for model $m$ across all predictions for tasks $i$ in the index set $\mathcal{I}$.
 
-We also compute relative versions of MAE and WIS.
+Finally, we examine probabilistic calibration through the difference between the empirical one-sided coverage rate at each quantile level and the nominal coverage rate:
+$$\delta_k = \frac{1}{\vert \mathcal{I} \vert} \sum_{i \in \mathcal{I}} \mathds{1}(z_i \leq q_i) - \alpha_k,$$
+where $\vert \mathcal{I} \vert$ is the size of the index set $\mathcal{I}$ and $\mathds{1}(z_i \leq q_i)$ is $1$ if $z_i \leq q_i$ and $0$ otherwise. A well-calibrated forecaster will have $\delta_i \approx 0$, while a conservative forecaster with wide prediction intervals will have $\delta_k > 0$ for $\alpha_k > 0.5$ and $\delta_k < 0$ for $\alpha_k < 0.5$.
 
 \section{Model}
 \label{sec:model}
@@ -220,10 +229,6 @@ TODO, we mostly did quantile averaging.  sometimes i used a linear pool when i d
 \subsection{Model adjustments used for real time forecasts}
 
 TODO, we tried a few different model variations over the course of the season.  To pull from \url{https://github.com/cdcepi/FluSight-forecast-hub/blob/main/model-metadata/UMass-flusion.yml}
-
-\section{Evaluation metrics}
-\label{sec:eval-metrics}
-
 
 \section{Real-time performance: the 2023/24 season}
 \label{sec:real-time-results}
