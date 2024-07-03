@@ -1,7 +1,64 @@
+@article{bracher2021WIS,
+  title={Evaluating epidemic forecasts in an interval format},
+  author={Bracher, Johannes and Ray, Evan L and Gneiting, Tilmann and Reich, Nicholas G},
+  journal={PLOS Computational Biology},
+  volume={17},
+  number={2},
+  pages={e1008618},
+  year={2021},
+  publisher={Public Library of Science San Francisco, CA USA}
+}
+
+@misc{cdc_flusurvnet,
+  author = {Centers for Disease Control and Prevention},
+  title = {Influenza Hospitalization Surveillance Network (FluSurv-NET)},
+  url = {https://www.cdc.gov/flu/weekly/influenza-hospitalization-surveillance.htm},
+  year = {2023},
+  note = "Accessed: 2024-07-03"
+}
+
+@misc{cdc_flusurveillance_overview,
+  author = {Centers for Disease Control and Prevention},
+  title = {U.S. Influenza Surveillance: Purpose and Methods},
+  url = {https://www.cdc.gov/flu/weekly/overview.htm},
+  year = {2023},
+  note = "Accessed: 2024-07-03"
+}
+
+@misc{cdc_flu_burden,
+  author = {Centers for Disease Control and Prevention},
+  title = {Past Seasons Estimated Influenza Disease Burden},
+  url = {https://www.cdc.gov/flu/about/burden/past-seasons.html},
+  year = {2024},
+  note = "Accessed: 2024-07-03"
+}
+
+@article{cramer2022covidMortalityForecasts,
+  title={Evaluation of individual and ensemble probabilistic forecasts of COVID-19 mortality in the United States},
+  author={Cramer, Estee Y and Ray, Evan L and Lopez, Velma K and Bracher, Johannes and Brennen, Andrea and Castro Rivadeneira, Alvaro J and Gerding, Aaron and Gneiting, Tilmann and House, Katie H and Huang, Yuxin and others},
+  journal={Proceedings of the National Academy of Sciences},
+  volume={119},
+  number={15},
+  pages={e2113561119},
+  year={2022},
+  publisher={National Acad Sciences}
+}
+
+@article{friedman2001gbm,
+  title={Greedy function approximation: a gradient boosting machine},
+  author={Friedman, Jerome H},
+  journal={Annals of Statistics},
+  volume={29},
+  number={5},
+  pages={1189--1232},
+  year={2001},
+  publisher={JSTOR}
+}
+
 @article{goldstein2011-predicting-epidemic-sizes-flu-strains,
   title={Predicting the epidemic sizes of influenza A/H1N1, A/H3N2, and B: a statistical method},
   author={Goldstein, Edward and Cobey, Sarah and Takahashi, Saki and Miller, Joel C and Lipsitch, Marc},
-  journal={PLoS medicine},
+  journal={PLOS Medicine},
   volume={8},
   number={7},
   pages={e1001051},
@@ -9,13 +66,110 @@
   publisher={Public Library of Science San Francisco, USA}
 }
 
+@article{hoffman2014nuts,
+  title={The No-U-Turn sampler: adaptively setting path lengths in Hamiltonian Monte Carlo.},
+  author={Hoffman, Matthew D and Gelman, Andrew and others},
+  journal={J. Mach. Learn. Res.},
+  volume={15},
+  number={1},
+  pages={1593--1623},
+  year={2014}
+}
+
+@inproceedings{ke2017lightgbm,
+  author = {Ke, Guolin and Meng, Qi and Finley, Thomas and Wang, Taifeng and Chen, Wei and Ma, Weidong and Ye, Qiwei and Liu, Tie-Yan},
+  title = {LightGBM: a highly efficient gradient boosting decision tree},
+  year = {2017},
+  isbn = {9781510860964},
+  publisher = {Curran Associates Inc.},
+  address = {Red Hook, NY, USA},
+  abstract = {Gradient Boosting Decision Tree (GBDT) is a popular machine learning algorithm, and has quite a few effective implementations such as XGBoost and pGBRT. Although many engineering optimizations have been adopted in these implementations, the efficiency and scalability are still unsatisfactory when the feature dimension is high and data size is large. A major reason is that for each feature, they need to scan all the data instances to estimate the information gain of all possible split points, which is very time consuming. To tackle this problem, we propose two novel techniques: Gradient-based One-Side Sampling (GOSS) and Exclusive Feature Bundling (EFB). With GOSS, we exclude a significant proportion of data instances with small gradients, and only use the rest to estimate the information gain. We prove that, since the data instances with larger gradients play a more important role in the computation of information gain, GOSS can obtain quite accurate estimation of the information gain with a much smaller data size. With EFB, we bundle mutually exclusive features (i.e., they rarely take nonzero values simultaneously), to reduce the number of features. We prove that finding the optimal bundling of exclusive features is NP-hard, but a greedy algorithm can achieve quite good approximation ratio (and thus can effectively reduce the number of features without hurting the accuracy of split point determination by much). We call our new GBDT implementation with GOSS and EFB LightGBM. Our experiments on multiple public datasets show that, LightGBM speeds up the training process of conventional GBDT by up to over 20 times while achieving almost the same accuracy.},
+  booktitle = {Proceedings of the 31st International Conference on Neural Information Processing Systems},
+  pages = {3149–3157},
+  numpages = {9},
+  location = {Long Beach, California, USA},
+  series = {NIPS'17}
+}
+
+@article{lainder2022forecastingGBT,
+  title={Forecasting with gradient boosted trees: augmentation, tuning, and cross-validation strategies: Winning solution to the M5 Uncertainty competition},
+  author={Lainder, A David and Wolfinger, Russell D},
+  journal={International Journal of Forecasting},
+  volume={38},
+  number={4},
+  pages={1426--1433},
+  year={2022},
+  publisher={Elsevier}
+}
+
+@article{lichtendahl2013betterAveProbQuant,
+  title={Is it better to average probabilities or quantiles?},
+  author={Lichtendahl Jr, Kenneth C and Grushka-Cockayne, Yael and Winkler, Robert L},
+  journal={Management Science},
+  volume={59},
+  number={7},
+  pages={1594--1611},
+  year={2013},
+  publisher={INFORMS}
+}
+
+@article{lopez2024covidCase,
+  title={Challenges of COVID-19 Case Forecasting in the US, 2020--2021},
+  author={Lopez, Velma K and Cramer, Estee Y and Pagano, Robert and Drake, John M and O’Dea, Eamon B and Adee, Madeline and Ayer, Turgay and Chhatwal, Jagpreet and Dalgic, Ozden O and Ladd, Mary A and others},
+  journal={PLOS Computational Biology},
+  volume={20},
+  number={5},
+  pages={e1011200},
+  year={2024},
+  publisher={Public Library of Science San Francisco, CA USA}
+}
+
+@article{makridakis2022m5,
+  title={M5 accuracy competition: Results, findings, and conclusions},
+  author={Makridakis, Spyros and Spiliotis, Evangelos and Assimakopoulos, Vassilios},
+  journal={International Journal of Forecasting},
+  volume={38},
+  number={4},
+  pages={1346--1364},
+  year={2022},
+  publisher={Elsevier}
+}
+
+@misc{nie2023patchtst,
+      title={A Time Series is Worth 64 Words: Long-term Forecasting with Transformers}, 
+      author={Yuqi Nie and Nam H. Nguyen and Phanwadee Sinthong and Jayant Kalagnanam},
+      year={2023},
+      eprint={2211.14730},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2211.14730}, 
+}
+
+@misc{phan2019composable,
+  title={Composable Effects for Flexible and Accelerated Probabilistic Programming in NumPyro},
+  author={Phan, Du and Pradhan, Neeraj and Jankowiak, Martin},
+  year={2019},
+  eprint={1912.11554},
+  archivePrefix={arXiv},
+  primaryClass={cs.AI},
+  url={https://arxiv.org/abs/1912.11554}, 
+}
+
 @article{shaman2013-influenza-forecast-2012-2013,
   title={Real-time influenza forecasts during the 2012--2013 season},
   author={Shaman, Jeffrey and Karspeck, Alicia and Yang, Wan and Tamerius, James and Lipsitch, Marc},
-  journal={Nature communications},
+  journal={Nature Communications},
   volume={4},
   number={1},
-  pages={2837},
   year={2013},
   publisher={Nature Publishing Group UK London}
+}
+
+@book{vincent1912functionsOfVibrissae,
+  title={The Functions of the Vibrissae in the Behavior of the White Rat},
+  author={Vincent, Stella Burnham},
+  volume={1},
+  number={5},
+  year={1912},
+  publisher={University of Chicago}
 }
