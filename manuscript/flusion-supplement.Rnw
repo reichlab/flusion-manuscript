@@ -199,6 +199,7 @@ ref_date_loc_revised |>
 
 \section{Experimental results: sensitivity analysis for data revisions}
 
+Table \ref{tab:scores_experiments} contains results from the post hoc experiments described in section 7 of the main text, omitting forecasts produced for combinations of location and reference date where the latest available NHSN data as of the reference date were subsequently revised up or down by at least 10 admissions. Comparing with table 2 of the main text, we see that the qualitative modeling results discussed there still hold in this sensitivity analysis.
 
 <<posthoc-scores, results='asis'>>=
 component_scores <- read_csv("../artifacts/scores/scores_by_model_flusion_components_without_revisions.csv") |>
@@ -287,7 +288,6 @@ table_2c <- c(
 table_2 <- c(table_2a, table_2b, table_2c)
 cat(table_2, sep = "\n")
 @
-
 
 \bibliography{flusion}
 
