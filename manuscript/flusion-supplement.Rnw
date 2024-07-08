@@ -29,7 +29,7 @@
 
 
 \title{Flusion: Integrating multiple data sources for accurate influenza predictions \\
-       \large Supplemental materials}
+       Supplemental materials}
 \author{Evan L. Ray, Yijin Wang, Russ Wolfinger, Nicholas G. Reich}
 
 \begin{document}
@@ -55,7 +55,12 @@ source("../code/utils.R")
 
 This document has supplemental materials.
 
-\section{Features}
+\section{Reporting adjustments for FluSurv-NET data}
+
+
+
+
+\section{Features derived from Taylor polynomial coefficients}
 
 \begin{figure}[h]
     \centering
@@ -66,6 +71,8 @@ This document has supplemental materials.
 
 \section{Feature importance}
 
+TODO clean up names of features in figure, describe how importance is calculated
+
 \begin{figure}[h]
     \centering
     \includegraphics[width=\textwidth]{../artifacts/figures/feature_importance.pdf}
@@ -73,10 +80,26 @@ This document has supplemental materials.
     \label{fig:forecasts_flusight}
 \end{figure}
 
-\section{FluSight -- scores omitting forecasts impacted by substantial data revisions}
+\section{FluSight results: sensitivity analysis for data revisions}
+
+<<revisions-dropped-info>>=
+source("../code/scoring_helpers.R")
+
+# load data
+ref_date_loc_revised <- get_ref_date_loc_revised(
+  rel_path_prefix = "..",
+  min_revision_size = 10)
+ref_date_loc_all <- get_ref_date_loc_revised(
+  rel_path_prefix = "..",
+  min_revision_size = 0)
+@
+
+Table \ref{tab:scores_flusight} contains MAE, MWIS, and PI coverage rates for real-time FluSight predictions, omitting predictions made on combinations of location and reference date for which the most recent available data at the time the prediction was generated were subsequently revised by 10 or more admissions.  This represents a generous sensitivity analysis, omitting \Sexpr{nrow(ref_date_loc_revised)} out of \Sexpr{nrow(ref_date_loc_all)} combinations of location and reference date for which predictions were submitted.  Figure \ref{fig:revisions-dropped-size-plot} displays information about the magnitudes of these revisions.
+
+Comparing with Table 1 in the primary manuscript, we note that the main results discussed there still hold: Flusion has the best MAE and MWIS values by a substantial margin, while the marginal coverage rates of its central prediction intervals are too conservative.
 
 <<overall-scores, results='asis'>>=
-overall_scores_table <- read_csv("../artifacts/scores/scores_by_model_flusight_all.csv") |>
+overall_scores <- read_csv("../artifacts/scores/scores_by_model_flusight_all_without_revisions.csv") |>
   add_model_anon(
     highlighted_models = c(
       "UMass-flusion" = "Flusion",
@@ -85,61 +108,186 @@ overall_scores_table <- read_csv("../artifacts/scores/scores_by_model_flusight_a
       "UMass-trends_ensemble" = "Baseline-trend"),
     number_others = TRUE
   ) |>
-  mutate(Model = model_anon,
-         `\\% Submitted` = prop * 100,
-         MWIS = wis,
-         RWIS = wis_scaled_relative_skill,
-         MAE = ae_median,
-         RAE = ae_median_scaled_relative_skill,
-         `50\\% PI Cov.` = interval_coverage_50,
-         `95\\% PI Cov.` = interval_coverage_95,
-         .keep = "none") |>
-  arrange(RWIS) |>
-  xtable::xtable(
-    caption = paste("Overall evaluation results for forecasts submitted to the FluSight Forecast Hub. Model names other than \\textbf{Flusion}, \\textbf{FluSight-ensemble}, \\textbf{Baseline-flat}, and \\textbf{Baseline-trend} are anonymized. The percent of all combinations of location, reference date, and horizon for which the given model submitted forecasts is shown in the ``\\% Submitted\" column; only models submitting at least 75\\% of forecasts were included. Results for the model with the best MWIS, RWIS, MAE, and RAE are highlighted. Results for the models where empirical PI coverage rates are closest to the nominal levels are highlighted."),
-    label = "tab:scores_flusight")
+  mutate(Model = model_anon)
 
-digits(overall_scores_table) <- c(0, 0, 1, 1, 3, 1, 3, 3, 3)
+make_scores_table <- function(scores, caption, label, bold_modelnames = TRUE) {
+  scores_table <- scores |>
+    mutate(Model = Model,
+           `\\% Submitted` = prop * 100,
+           MWIS = wis,
+           RWIS = wis_scaled_relative_skill,
+           MAE = ae_median,
+           RAE = ae_median_scaled_relative_skill,
+           `50\\% Cov.` = interval_coverage_50,
+           `95\\% Cov.` = interval_coverage_95,
+           .keep = "none") |>
+    arrange(RWIS) |>
+    xtable::xtable(
+      caption = caption,
+      label = label)
 
-# print with specified entries in bold font
-# adapted from https://gist.github.com/floybix/452201
-bold_entries <- cbind(
-  !grepl("Other Model", overall_scores_table$Model),
-  rep(FALSE, nrow(overall_scores_table)),
-  overall_scores_table$MWIS == min(overall_scores_table$MWIS),
-  overall_scores_table$RWIS == min(overall_scores_table$RWIS),
-  overall_scores_table$MAE == min(overall_scores_table$MAE),
-  overall_scores_table$RAE == min(overall_scores_table$RAE),
-  abs(overall_scores_table[["50\\% PI Cov."]] - 0.5) == min(abs(overall_scores_table[["50\\% PI Cov."]] - 0.5)),
-  abs(overall_scores_table[["95\\% PI Cov."]] - 0.95) == min(abs(overall_scores_table[["95\\% PI Cov."]] - 0.95))
-)
+  digits(scores_table) <- c(0, 0, 1, 1, 3, 1, 3, 3, 3)
 
-display <- display(overall_scores_table)
-digits <- digits(overall_scores_table)
-for (i in 1:ncol(overall_scores_table)) {
-  if (is.numeric(overall_scores_table[,i])) {
-    overall_scores_table[,i] <- formatC(
-      overall_scores_table[,i],
-      digits = digits[i+1],
-      format = display[i+1])
-    display(overall_scores_table)[i+1] <- "s"
+  # print with specified entries in bold font
+  # adapted from https://gist.github.com/floybix/452201
+  if (bold_modelnames) {
+    bold_modelnames <- !grepl("Other Model", scores_table$Model)
+  } else {
+    bold_modelnames <- rep(FALSE, nrow(scores_table))
   }
+  bold_entries <- cbind(
+    bold_modelnames,
+    rep(FALSE, nrow(scores_table)),
+    scores_table$MWIS == min(scores_table$MWIS),
+    scores_table$RWIS == min(scores_table$RWIS),
+    scores_table$MAE == min(scores_table$MAE),
+    scores_table$RAE == min(scores_table$RAE),
+    abs(scores_table[["50\\% Cov."]] - 0.5) == min(abs(scores_table[["50\\% Cov."]] - 0.5)),
+    abs(scores_table[["95\\% Cov."]] - 0.95) == min(abs(scores_table[["95\\% Cov."]] - 0.95))
+  )
 
-  ## embolden
-  yes <- bold_entries[,i]
-  overall_scores_table[yes,i] <- paste("\\textbf{", overall_scores_table[yes,i], "}", sep = "")
+  display <- display(scores_table)
+  digits <- digits(scores_table)
+  for (i in 1:ncol(scores_table)) {
+    if (is.numeric(scores_table[,i])) {
+      scores_table[,i] <- formatC(
+        scores_table[,i],
+        digits = digits[i+1],
+        format = display[i+1])
+      display(scores_table)[i+1] <- "s"
+    }
+
+    ## embolden
+    yes <- bold_entries[,i]
+    scores_table[yes,i] <- paste("\\textbf{", scores_table[yes,i], "}", sep = "")
+  }
+  
+  return(scores_table)
 }
 
-print(overall_scores_table,
+overall_scores_table_revisions <- make_scores_table(
+  overall_scores,
+  caption = paste("Overall evaluation results for forecasts submitted to the FluSight Forecast Hub, omitting forecasts made on combinations of reference date and location for which the latest available NHSN data at the time of the forecast were subsequently revised by 10 or more admissions. Model names other than Flusion, FluSight-ensemble, Baseline-flat, and Baseline-trend are anonymized. The percent of all combinations of location, reference date, and horizon for which the given model submitted forecasts is shown in the ``\\% Submitted\" column; only models submitting at least 2/3 of forecasts were included. Results for the model with the best MWIS, RWIS, MAE, and RAE are highlighted. Results for the models where empirical PI coverage rates are closest to the nominal levels are highlighted."),
+  label = "tab:scores_flusight"
+)
+
+print(overall_scores_table_revisions,
       include.rownames = FALSE, sanitize.text.function = function(x) {x})
 @
 
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=\textwidth]{../artifacts/figures/scores_flusight.pdf}
-    \caption{Influenza data and evaluation results. Panel (a): Target influenza hospital admissions data for the 2023/24 season, aggregated across all forecasted state-level geographic units. Panel (b): RWIS for models contributing to the FluSight Forecast Hub, stratified by forecast horizon (panels) and target date (horizontal axis). Lower relative WIS indicates better forecast performance. To focus on areas of interest, RWIS values greater than 2.5 are not displayed. Panel (c): One-sided quantile coverage differential, computed as empirical coverage rate minus nominal coverage rate. A well-calibrated model has a differential of 0, while a conservative method (with wide prediction intervals) has a negative differential at nominal coverage rates that are less than 0.5 and a positive differential at nominal coverage rates greater than 0.5. In panels (b) and (c), we highlight performance for the Flusion model, two baselines, and the FluSight ensemble; results for other models contributed to the hub are shown in light grey.}
-    \label{fig:scores_flusight}
-\end{figure}
+
+<<revisions-dropped-size-plot, fig.height=6, fig.width=7.5, fig.cap="Measures of the size of reporting revisions for combinations of location and reference date that were omitted in the sensitivity analysis.  For legibility, only those revisions that were dropped (i.e., where the revision amount was at least 10 admissions up or down from the initial reported value) are displayed; most revisions were small.  The top panel shows the size of the revision in units of hospital admissions, where positive numbers indicate an upward revision of the initially reported value.  The second panel shows the absolute value of the revision size as a proportion of the final reported value.  The third panel shows the absolute value of the revision size as a proportion of the initial reported value.  When computing proportions, we add one to the denominator to avoid division by zero.  As an example, for October 7, 2023 (the last date for which data were available when producing predictions with a reference date of October 14, 2023), in Washington state the initial reported value was 43, which was subsequently revised down to a final value of 4. The revision amount is -39, which is 7.80 when expressed as a proportion of the final reported value or 0.89 when expressed as a proportion of the initial reported value.">>=
+library(ggplot2)
+library(tidyr)
+
+ref_date_loc_revised |>
+  mutate(revision_size = value - initial_value) |>
+  pivot_longer(starts_with("revision_"), values_to = "revision_value") |>
+  mutate(
+    name = case_when(
+      name == "revision_size" ~ "Number of admissions",
+      name == "revision_prop" ~ "Proportion of final value",
+      name == "revision_prop2" ~ "Proportion of initial value"
+    )
+  ) |>
+  ggplot() +
+    geom_histogram(mapping = aes(x = revision_value), boundary=0) +
+    facet_wrap( ~ name, ncol = 1, scales = "free_x") +
+    xlab("Revision size") + 
+    theme_bw()
+@
+
+\section{Experimental results: sensitivity analysis for data revisions}
+
+
+<<posthoc-scores, results='asis'>>=
+component_scores <- read_csv("../artifacts/scores/scores_by_model_flusion_components_without_revisions.csv") |>
+  mutate(
+    Model = case_when(
+      model == "UMass-flusion__gbq_qr__sarix" ~ "GBQR, ARX",
+      model == "UMass-flusion" ~ "Flusion",
+      model == "UMass-gbq_qr" ~ "GBQR",
+      model == "UMass-flusion__gbq_qr__gbq_qr_no_level" ~ "GBQR, GBQR-no-level",
+      model == "UMass-flusion__gbq_qr_no_level__sarix" ~ "GBQR-no-level, ARX",
+      model == "UMass-gbq_qr_no_level" ~ "GBQR-no-level",
+      model == "UMass-sarix" ~ "ARX",
+      model == "FluSight-baseline" ~ "Baseline-flat"
+    )
+  )
+
+component_scores_table <- make_scores_table(
+  component_scores,
+  caption = NULL,
+  label = "junk label",
+  bold_modelnames = FALSE
+)
+table_2a <- capture.output(
+  print(component_scores_table,
+        include.rownames = FALSE, sanitize.text.function = function(x) {x})
+)
+table_2a <- c(
+  table_2a[1:5],
+  "\\multicolumn{8}{l}{Experiment A: Component model performance} \\\\",
+  table_2a[6:17]
+)
+
+joint_training_scores <- read_csv("../artifacts/scores/scores_by_model_joint_training_without_revisions.csv") |>
+  mutate(
+    Model = case_when(
+      model == "UMass-gbq_qr" ~ "GBQR",
+      model == "UMass-gbq_qr_fit_locations_separately" ~ "GBQR-by-location",
+      model == "UMass-gbq_qr_hhs_only" ~ "GBQR-only-NHSN",
+      model == "FluSight-baseline" ~ "Baseline-flat"
+    )
+  )
+
+joint_training_scores_table <- make_scores_table(
+  joint_training_scores,
+  caption = NULL,
+  label = "junk label",
+  bold_modelnames = FALSE
+)
+table_2b <- capture.output(
+  print(joint_training_scores_table,
+        include.rownames = FALSE, sanitize.text.function = function(x) {x})
+)
+table_2b <- c(
+  "\\\\",
+  "\\multicolumn{8}{l}{Experiment B: Reduced training data} \\\\",
+  table_2b[6:13]
+)
+
+preprocessing_scores <- read_csv("../artifacts/scores/scores_by_model_flusion_data_adj_without_revisions.csv") |>
+  mutate(
+    Model = case_when(
+      model == "UMass-gbq_qr" ~ "GBQR",
+      model == "UMass-gbq_qr_no_reporting_adj" ~ "GBQR-no-reporting-adj",
+      model == "UMass-gbq_qr_no_transform" ~ "GBQR-no-transform",
+      model == "FluSight-baseline" ~ "Baseline-flat"
+    )
+  )
+
+preprocessing_scores_table <- make_scores_table(
+  preprocessing_scores,
+  caption = paste("Evaluation results for post hoc experiments investigating determinants of model performance, omitting forecasts made on combinations of reference date and location for which the latest available NHSN data at the time of the forecast were subsequently revised by 10 or more admissions.  Experiment A gives results for individual component models in the Flusion ensemble, ensembles of pairs of components, and the full Flusion ensemble including all three components.  Experiment B gives results for the GBQR model, which is trained jointly on data for all locations and data sources, and variations trained separately for each location (GBQR-by-location) and trained only on hospital admissions from NHSN (GBQR-only-NHSN).  Experiment C gives results for a variation on the GBQR model that does not incorporate reporting adjustments designed to improve the degree to which ILINet and FluSurvNET data reflect influenza activity (GBQR-no-reporting-adj) and a variation that does not use a fourth-root transform (GBQR-no-transform), along with the original GBQR model which uses the reporting adjustments and the fourth-root transform. The percent of all combinations of location, reference date, and horizon for which the given model submitted forecasts is shown in the ``\\% Submitted\" column; in these retrospective experiments, we produced forecasts for all locations and time points. Within each experiment group, results for the model with the best MWIS, RWIS, MAE, and RAE are highlighted. Results for the models where empirical PI coverage rates are closest to the nominal levels are highlighted."),
+  label = "tab:scores_experiments",
+  bold_modelnames = FALSE
+)
+table_2c <- capture.output(
+  print(preprocessing_scores_table,
+        include.rownames = FALSE, sanitize.text.function = function(x) {x})
+)
+
+table_2c <- c(
+  "\\\\",
+  "\\multicolumn{8}{l}{Experiment C: Data preprocessing} \\\\",
+  table_2c[6:17]
+)
+
+table_2 <- c(table_2a, table_2b, table_2c)
+cat(table_2, sep = "\n")
+@
+
 
 \bibliography{flusion}
 

@@ -246,7 +246,7 @@ Finally, in the submission for reference date of December 16, 2023, we dropped o
 
 Code for fitting models and generating predictions for real-time submissions and retrospective experiments is available at \url{https://github.com/reichlab/flusion}. Feature preprocessing functionality is implemented in a Python module at \url{https://github.com/reichlab/timeseriesutils/}, and the ARX model is implemented in a Python module at \url{https://github.com/elray1/sarix}. Code for analyses in the manuscript and supplement is available at \url{https://github.com/reichlab/flusion-manuscript}. The manuscript is generated with a reproducible workflow using Docker and Sweave.
 
-\section{Real-time performance: the 2023/24 season}
+\section{Real-time performance: the 2023/24 FluSight season}
 \label{sec:real-time-results}
 
 In this section, we summarize model performance results for real-time submissions to the FluSight Forecast Hub in the 2023/24 season.

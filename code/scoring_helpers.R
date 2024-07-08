@@ -117,10 +117,11 @@ compute_scores <- function(
 #' available as of that forecast date were subsequently revised
 #' Note: these are reference dates where the data on the date one week prior
 #' experienced a revision
-get_ref_date_loc_revised <- function() {
-  target_data <- readr::read_csv("artifacts/target_data.csv") |>
+get_ref_date_loc_revised <- function(rel_path_prefix = ".",
+                                     min_revision_size = 10) {
+  target_data <- readr::read_csv(paste0(rel_path_prefix, "/artifacts/target_data.csv")) |>
     dplyr::select(date, location, location_name, value, weekly_rate)
-  initial_target_data <- readr::read_csv("artifacts/initial_target_data.csv")
+  initial_target_data <- readr::read_csv(paste0(rel_path_prefix, "/artifacts/initial_target_data.csv"))
 
   location_dates_revised <- initial_target_data |>
     dplyr::rename(initial_value = inc) |>
@@ -134,7 +135,7 @@ get_ref_date_loc_revised <- function() {
       revision_prop = revision_size / (value + 1),
       revision_prop2 = revision_size / (initial_value + 1)
     ) |>
-    dplyr::filter(revision_size >= 10)
+    dplyr::filter(revision_size >= min_revision_size)
 
   return(location_dates_revised)
 }
