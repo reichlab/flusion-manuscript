@@ -58,24 +58,30 @@ Over the last ten years, the US Centers for Disease Control and Prevention (CDC)
 Starting with the 2021/22 influenza season, the forecasting targets for this challenge have been based on hospital admissions reported in the CDC’s National Healthcare Safety Network (NHSN) surveillance system.
 Reporting of hospital admissions through NHSN began during the COVID pandemic, and as such NHSN has only a limited amount of historical data about influenza hospitalizations.
 To produce forecasts in the presence of limited data for the target surveillance system, we augmented these data with two signals that have a longer historical record: 1) ILI+, which estimates the proportion of outpatient doctor visits where the patient has influenza; and 2) rates of laboratory-confirmed influenza hospitalizations at a set of sentinel healthcare facilities.
-Our model, Flusion, is an ensemble model that combines two machine learning models using gradient boosting for quantile regression based on different feature sets with a Bayesian autoregressive model.
+Our model, flusion, is an ensemble model that combines two machine learning models using gradient boosting for quantile regression based on different feature sets with a Bayesian autoregressive model.
 The gradient boosting models were trained on all three data signals, while the autoregressive model was trained on only data for the target surveillance signal, NHSN admissions; all three models were trained jointly on data for multiple locations.
-In each week of the influenza season, these models produced quantiles of a predictive distribution for influenza hospital admissions in each state in the current week and the following three weeks; the ensemble prediction was computed by averaging these quantile predictions.
+In each week of the influenza season, these models produced quantiles of a predictive distribution of influenza hospital admissions in each state for the current week and the following three weeks; the ensemble prediction was computed by averaging these quantile predictions.
 Flusion emerged as the top-performing model in the CDC's influenza prediction challenge for the 2023/24 season.
 In this article we investigate the factors contributing to flusion's success, and we find that its strong performance was primarily driven by the use of a gradient boosting model that was trained jointly on data from multiple surveillance signals and multiple locations.
-These results indicate the value of sharing information across multiple locations and surveillance signals, especially when doing so enlargens the pool of available training data.
+These results indicate the value of sharing information across multiple locations and surveillance signals, especially when doing so adds to the pool of available training data.
 \end{abstract}
 
 \section{Introduction}
 \label{sec:intro}
 
 There is a long history of forecasting seasonal influenza, often through formal collaborative forecasting exercises organized by the US Centers for Disease Control and Prevention (CDC).
-\begin{itemize}
-\item Long history going back 10 years
-\item After a pause during the first two years of the COVID-19 pandemic, this forecasting exercise restarted in the 2022/23 flu season.
-\end{itemize}
+Starting during the 2013/2014 influenza season, the FluSight forecasting challenges have brought together teams of academic, industry and governmental researchers to produce probabilistic forecasts of influenza activity in the United States.\cite{biggerstaff_results_2016}
+After a pause during the first two years of the COVID-19 pandemic, this forecasting exercise restarted in the spring of 2022.\cite{us_centers_for_disease_control_and_prevention_flusight_2023}
+FluSight typically involves over 20 different teams submitting forecasts each week, using different methodologies and sometimes different data sources.
+Ensemble forecast techniques have been used by CDC and other groups to combine individual team submissions into a single consensus forecast, which typically have shown some of the most accurate performance overall.\cite{mcgowan_collaborative_2019,reich_accuracy_2019}
+A primary motivation for the FluSight challenges is to carefully evaluate forecasts against real data and to use them to improve situational awareness and yield more effective public health actions.\cite{lutz_applying_2019}
 
-A challenge in recent forecasting exercises is that new data streams have come online which are being used as the ``ground truth'' target for these forecasting exercises.  These data sources have been great in many ways, but the lack of an extensive history of data for model training introduces difficulty for learning about seasonal patterns in flu.  To address this challenge, this season we developed a new model, called `flusion`, which pulls in data from external data sources with a long history of observations.  This model was the top-performing model that was contributed to the FluSight Forecast Hub in the 2023/24 influenza season.  The purpose of this paper is to describe that model and investigate what aspects of its design were associated with its strong performance.
+
+A challenge in FluSight seasons in the seasons just following the COVID pandemic was that new data streams came online during the pandemic which were used as the ``ground truth'' target for these forecasting exercises. 
+For example, from 2022 through 2024, the forecasting targets for FluSight were been based on hospital admissions reported in the CDC’s National Healthcare Safety Network (NHSN) surveillance system.
+Reporting of influenza hospital admissions through NHSN began during the COVID pandemic, and as such the NHSN data have only a limited amount of information about influenza hospitalizations or historical seasonal patterns in influenza transmission.
+While the NHSN data surpassed previous surveillance systems in terms of spatial and temporal granularity, the lack of an extensive history of data for model training introduced challenges to learning about seasonal patterns in influenza burden in the US.  
+To address this challenge, for the 2023/2024 FluSight season we developed a new model, called `flusion`, which pulled in data from external data sources with a long history of observations.  This model was the top-performing model submitted to FluSight in this season.  The purpose of this paper is to describe the `flusion` model and provide insights into what aspects of its design were associated with its strong performance.
 
 \begin{itemize}
 \item methods for infectious disease forecasting, including methods that integrate multiple data sources.
@@ -88,7 +94,7 @@ A challenge in recent forecasting exercises is that new data streams have come o
 
 In terms of methodology, our primary focus in this work is on forecasting using gradient boosting \cite{friedman2001gbm}. In particular, our work closely follows the approach of \cite{lainder2022forecastingGBT}, which was the leading approach in several time series forecasting competitions including strong performance for forecasting COVID-19 \cite{lopez2024covidCase}. Forecasting methods based on gradient boosting have been found to be effective more generally; for example, the majority of the top-performing competitors in the M5 forecast accuracy competition used gradient boosting \cite{makridakis2022m5}.
 
-The remainder of this article is structured as follows. We begin with some context for our work, including a discussion of the data sources we use in section \ref{sec:data} and an overview of the FluSight forecasting exercise in \ref{sec:flusight}. We establish notation in section \ref{sec:notation} and describe our modeling approaches in section \ref{sec:model}, and then we discuss the performance of our real-time forecasts in section \label{sec:real-time-results}. Section \ref{sec:post-hoc-results} details a series of ablation studies that provide insight about which aspects of our modeling approach were important to its success. We conclude in section \ref{sec:discussion}.
+The remainder of this article is structured as follows. We begin with some context for our work, including a discussion of the data sources we use in section \ref{sec:data} and an overview of the FluSight forecasting exercise in \ref{sec:flusight}. We establish notation in section \ref{sec:notation} and describe our modeling approaches in section \ref{sec:model}, and then we discuss the performance of our real-time forecasts in section \ref{sec:real-time-results}. Section \ref{sec:post-hoc-results} details a series of ablation studies that provide insight about which aspects of our modeling approach were important to its success. We conclude in section \ref{sec:discussion}.
 
 \section{Data Sources}
 \label{sec:data}
