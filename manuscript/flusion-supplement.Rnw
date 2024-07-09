@@ -60,14 +60,47 @@ This document has supplemental materials.
 
 
 
-\section{Features derived from Taylor polynomial coefficients}
+\section{Features measuring local level, slope, and curvature of the surveillance signal}
+
+As was described in section 5 of the main text, the GBQR models used features based on rolling means and the coefficients of Taylor polynomials fit to rolling windows of the data. These features are designed to estimate the local level, slope, and curvature of the surveillance signal at each point in time, and we describe their calculation here. Recall the notation $\tilde{z}_{l,s,t}$ representing the value of the signal for location $l$ and data source $s$ at time $t$, after some initial standardizing transformations as described in section 5.1 of the main text.
+
+At time $t$, the rolling mean over the trailing window of length $w$ is computed as
+\begin{equation}
+\frac{1}{w} \sum_{u = t - w + 1}^t \tilde{z}_{l,s,u}. \label{eqn:roll_mean}
+\end{equation}
+
+The coefficients of a degree $d$ Taylor polynomial based on the trailing window of length $w$ relative to the anchor point $t$ are obtained by fitting the following model to the observations $\{\tilde{z}_{l,s,u}: u = t - w + 1, \ldots, t\}$:
+\begin{align}
+\tilde{z}_{l,s,u} &= \sum_{c = 0}^d \frac{1}{c!}\beta_c (u - t)^c + \varepsilon_u \label{eqn:taylor_model} \\
+\varepsilon_u &\sim \text{Normal}(0, \sigma^2) \nonumber
+\end{align}
+For example, with $d = 2$ we fit the quadratic model
+\begin{align*}
+\tilde{z}_{l,s,u} &= \beta_0 + \beta_1 (u - t) + \frac{1}{2}\beta_2 (u - t)^2 + \varepsilon_u \\
+\varepsilon_u &\sim \text{Normal}(0, \sigma^2)
+\end{align*}
+To motivate this, suppose that the underlying signal follows a mean trend over time given by the smooth function $g(u)$, with observation noise due to, e.g., the reporting process. The function $g$ can be written in terms of its derivatives $g^{(c)}$ using the Taylor expansion about the point $t$:
+$$
+g(u) = \sum_{c = 0}^\infty \frac{g^{(c)}(t)}{c!} (u - t)^c.
+$$
+Truncating to the first $d+1$ terms yields an approximation to $g$ in the neighborhood of $t$, and the coefficient estimates $\beta_c$ from the linear model \eqref{eqn:taylor_model} can be regarded as estimates of the corresponding derivatives $g^{(c)}(t)$.
+We refer to estimates of $\beta_0$, $\beta_1$, and $\beta_2$ as estimates of the local level, trend, and curvature of the signal respectively. The highest degree we used in any of our feature computations was $d = 2$.
+Note that the rolling mean of Equation \eqref{eqn:roll_mean} could also be obtained from this process using a Taylor polynomial of degree $d = 0$, though in practice we used a more direct implementation.
+
+Figure \ref{fig:forecasts_flusight} illustrates the values of these features for the NHSN admission signal in the state of Michigan in the 2023/24 season. As expected, the features calculated based on longer window sizes $w$ and lower polynomial degrees $d$ vary more smoothly over time than features calculated based on shorter windows or higher polynomial degrees. Nevertheless, the features generally agree in terms of when the slope and curvature are positive or negative.
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=\textwidth]{../artifacts/figures/features.pdf}
-    \caption{Caption about features.}
+    \caption{Example of features measuring the local level, trend, and curvature of the standardized NHSN admissions signal for the state of Michigan in the 2023/24 season (shown in black in the top panel for reference). At each time on the horizontal axis, a vertical line will intersect features calculated based on a trailing window ending on that date. For example, on Christmas week (just before Jan 2024), features based on a Taylor polynomial of degree $d=2$ fit to a trailing window of size $w = 4$ produced a local level estimate that closely matched the Christmas peak observed in the data, a positive slope just over 0.1 on the scale of the standardized data, and a positive curvature just under 0.05 indicating that the trend was increasing over that four week period.}
     \label{fig:forecasts_flusight}
 \end{figure}
+
+Note that at the end of the signal, only observations on or before the last time point are available. This motivates the use of a trailing window for feature calculation: with this choice, the features computed at both the end of the time series and at earlier time points can be expected to have similar characteristics as measures of local derivatives of the signal's trend. In contrast, if a centered window were used, estimates at earlier time points (when all observations within the centered window are available) would be more reliable than estimates at the end of the series.
+
+Importantly, we do not account for the history of data revisions when we calculate these features. For example, for model fitting on reference date $t$, training examples are assembled for past times $u < t$ that include features measuring the local level, slope, and curvature at those times $u$. Those features are calculated based on the latest available data at time $t$, not based on the data that would have been available at time $u$. This means that our model implicitly estimates the relationships between these features and the target when the features are calculated on finalized, fully reported data. However, when predictions are generated extending from the reference date $t$, those features are calculated at the end of the time series when reporting is more likely to be subsequently revised, leading to a mismatch between the data used for model fitting and the data used for prediction. This is a challenging problem to address in a setting like ours where the target data system has only a short reporting history and the characteristics of its revision process are not well known.
+
+Finally, we highlight that although features such as the rolling mean or the intercept of a Taylor polynomial only directly measure the local level of the signal, when their lags are also included as features they can provide information about trend as well. For example, if we see that the rolling mean at time $t$ is larger than the rolling mean at time $t-1$ we may infer that the value of the signal is rising.
 
 \section{Feature importance}
 
