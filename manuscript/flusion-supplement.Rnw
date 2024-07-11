@@ -16,6 +16,7 @@
 \onehalfspacing
 
 \usepackage{parskip}
+\usepackage{authblk}
 
 \usepackage{soul}
 \usepackage{xcolor}
@@ -32,7 +33,12 @@
 
 \title{Flusion: Integrating multiple data sources for accurate influenza predictions \\
        Supplemental materials}
-\author{Evan L. Ray, Yijin Wang, Russ Wolfinger, Nicholas G. Reich}
+\author[1]{Evan L. Ray}
+\author[1]{Yijin Wang}
+\author[2]{Russell D. Wolfinger}
+\author[1]{Nicholas G. Reich}
+\affil[1]{Department of Biostatistics and Epidemiology, University of Massachusetts, Amherst, MA, United States}
+\affil[2]{SAS Institute Inc., Cary, NC, United States}
 
 \begin{document}
 

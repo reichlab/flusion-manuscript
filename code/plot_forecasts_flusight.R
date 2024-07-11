@@ -134,7 +134,7 @@ p <- ggplot() +
     color = "orange",
     data = combined_target_data_for_plot) +
   scale_linetype("Reported Data") +
-  scale_fill_brewer("PI Level") +
+  scale_fill_brewer("Interval Level", labels = c("95%", "50%")) +
   scale_x_date("Forecast target date", date_breaks = "2 month", date_labels = "%b %Y",
     # limits = c(as.Date("2020-07-25"), as.Date("2021-11-15")),
     expand = expansion()) +
