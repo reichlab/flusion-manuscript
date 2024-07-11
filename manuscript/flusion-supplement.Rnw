@@ -61,13 +61,14 @@ source("../code/utils.R")
 
 \section{Introduction}
 
-This document has supplemental materials.
+This document provides supplemental analyses and results for the Flusion manuscript. Section \ref{sec:flusurv_burden_adj} describes the approach we use to adjusting the FluSurv-NET data to account for testing rates and test sensitivity in that surveillance system.  Section \ref{sec:feats} describes the features used in the GBQR model that summarize local behavior of the target surveillance signal.  Section \ref{sec:feature_importance} presents results about the importance of the features used by the GBQR model. Sections \ref{sec:flusight_sensitivity} and \ref{sec:experiments_sensitivity} describe sensitivity analyses investigating whether the forecast evaluation results in the main text are impacted by data revisions.
 
 \section{Reporting adjustments for FluSurv-NET data}
+\label{sec:flusurv_burden_adj}
 
 In this section, we describe the adjustments we made to the reported FluSurv-NET data. The measure of influenza activity reported by FluSurv-NET is the rate of positive influenza cases per 100,000 population in the catchment area of a reporting healthcare facility or group of facilities. For the purposes of FluSurv-NET, ``a case is defined as a person who is a resident in a defined FluSurv-NET catchment area and tests positive for influenza by a laboratory test ordered by a health care professional within 14 days prior to or during hospitalization'' \cite{cdc_flusurvnet}. This measure of influenza activity may be impacted by underdetection of influenza cases either if patients with influenza are not tested or if they are tested but the test generates a false negative result.
 
-The US Centers for Disease Control and Prevention (CDC) produces annual estimates of influenza disease burden at the national level that adjust for testing rates and test sensitivity, including point estimates of total nationwide influenza hospitalizations in each season along with 95\% uncertainty intervals \cite{cdc_flu_burden_methods, cdc_flu_burden}. We used these to estimate a season-specific scale up factor $\alpha$ that was used to adjust the FluSurv-NET data. This factor was obtained by solving the following equation for $\alpha$ based on the total hospitalization rate over the course of the season that was reported across the entire FluSurv-NET network, the point estimate of national hospital burden due to influenza from CDC, and the US population in units of 100,000 people as reported by the US Census Bureau for the first year of the influenza season:
+The US Centers for Disease Control and Prevention (CDC) produces annual estimates of influenza disease burden at the national level that adjust for testing rates and test sensitivity, including point estimates of total nationwide influenza hospitalizations in each season along with 95\% uncertainty intervals \cite{cdc_flu_burden_methods, cdc_flu_burden}. We used these to estimate a season-specific scale up factor $\alpha$ that was used to adjust the FluSurv-NET data. This factor was obtained by solving the following equation for $\alpha$ based on the total hospitalization rate over the course of the season that was reported across the entire FluSurv-NET network, the point estimate of national hospital burden due to influenza from CDC, and the US population in units of 100,000 people as reported by the US Census Bureau for the first year of the influenza season \cite{census_pop_older, census_pop_recent}:
 $$\alpha \cdot (\text{cumulative reported hospitalization rate, FluSurv-NET})
 = \frac{\text{National burden estimate}}{\text{100k US population}}$$
 
@@ -100,6 +101,7 @@ print(
 @
 
 \section{Features measuring local level, slope, and curvature of the surveillance signal}
+\label{sec:feats}
 
 As was described in section 5 of the main text, the GBQR models used features based on rolling means and the coefficients of Taylor polynomials fit to rolling windows of the data. These features are designed to estimate the local level, slope, and curvature of the surveillance signal at each point in time, and we describe their calculation here. Recall the notation $\tilde{z}_{l,s,t}$ representing the value of the signal for location $l$ and data source $s$ at time $t$, after some initial standardizing transformations as described in section 5.1 of the main text.
 
@@ -126,13 +128,13 @@ Truncating to the first $d+1$ terms yields an approximation to $g$ in the neighb
 We refer to estimates of $\beta_0$, $\beta_1$, and $\beta_2$ as estimates of the local level, trend, and curvature of the signal respectively. The highest degree we used in any of our feature computations was $d = 2$.
 Note that the rolling mean of Equation \eqref{eqn:roll_mean} could also be obtained from this process using a Taylor polynomial of degree $d = 0$, though in practice we used a more direct implementation.
 
-Figure \ref{fig:forecasts_flusight} illustrates the values of these features for the NHSN admission signal in the state of Michigan in the 2023/24 season. As expected, the features calculated based on longer window sizes $w$ and lower polynomial degrees $d$ vary more smoothly over time than features calculated based on shorter windows or higher polynomial degrees. Nevertheless, the features generally agree in terms of when the slope and curvature are positive or negative.
+Figure \ref{fig:features} illustrates the values of these features for the NHSN admission signal in the state of Michigan in the 2023/24 season. As expected, the features calculated based on longer window sizes $w$ and lower polynomial degrees $d$ vary more smoothly over time than features calculated based on shorter windows or higher polynomial degrees. Nevertheless, the features generally agree in terms of when the slope and curvature are positive or negative.
 
-\begin{figure}[h]
+\begin{figure}[ht]
     \centering
     \includegraphics[width=\textwidth]{../artifacts/figures/features.pdf}
     \caption{Example of features measuring the local level, trend, and curvature of the standardized NHSN admissions signal for the state of Michigan in the 2023/24 season (shown in black in the top panel for reference). At each time on the horizontal axis, a vertical line will intersect features calculated based on a trailing window ending on that date. For example, on Christmas week (just before Jan 2024), features based on a Taylor polynomial of degree $d=2$ fit to a trailing window of size $w = 4$ produced a local level estimate that closely matched the Christmas peak observed in the data, a positive slope just over 0.1 on the scale of the standardized data, and a positive curvature just under 0.05 indicating that the trend was increasing over that four week period.}
-    \label{fig:forecasts_flusight}
+    \label{fig:features}
 \end{figure}
 
 Note that at the end of the signal, only observations on or before the last time point are available. This motivates the use of a trailing window for feature calculation: with this choice, the features computed at both the end of the time series and at earlier time points can be expected to have similar characteristics as measures of local derivatives of the signal's trend. In contrast, if a centered window were used, estimates at earlier time points (when all observations within the centered window are available) would be more reliable than estimates at the end of the series.
@@ -142,17 +144,19 @@ Importantly, we do not account for the history of data revisions when we calcula
 Finally, we highlight that although features such as the rolling mean or the intercept of a Taylor polynomial only directly measure the local level of the signal, when their lags are also included as features they can provide information about trend as well. For example, if we see that the rolling mean at time $t$ is larger than the rolling mean at time $t-1$ we may infer that the value of the signal is rising.
 
 \section{Feature importance}
+\label{sec:feature_importance}
 
-TODO clean up names of features in figure, describe how importance is calculated
+Figure \ref{fig:feature_importance} shows feature importance scores for the GBQR fit for the reference date of January 6, 2024. See section 7 of the main text for more detail on how importance scores were calculated.
 
-\begin{figure}[h]
+\begin{figure}[htp]
     \centering
     \includegraphics[width=\textwidth]{../artifacts/figures/feature_importance.pdf}
-    \caption{Caption about feature importance.}
-    \label{fig:forecasts_flusight}
+    \caption{Feature importance values for the GBQR fit for the reference date of January 6, 2024. ``Signal value" indicates the latest reported value of the signal. For Taylor polynomial features, ``d'' indicates the polynomial degree and ``c'' indicates the coefficient corresponding to the feature value. For Taylor polynomial and rolling mean features, ``w'' indicates the window size used for feature calculation and if present ``lag" indicates the weekly lag used for the feature value.}
+    \label{fig:feature_importance}
 \end{figure}
 
 \section{FluSight results: sensitivity analysis for data revisions}
+\label{sec:flusight_sensitivity}
 
 <<revisions-dropped-info>>=
 source("../code/scoring_helpers.R")
@@ -270,6 +274,7 @@ ref_date_loc_revised |>
 @
 
 \section{Experimental results: sensitivity analysis for data revisions}
+\label{sec:experiments_sensitivity}
 
 Table \ref{tab:scores_experiments} contains results from the post hoc experiments described in section 7 of the main text, omitting forecasts produced for combinations of location and reference date where the latest available NHSN data as of the reference date were subsequently revised up or down by at least 10 admissions. Comparing with table 2 of the main text, we see that the qualitative modeling results discussed there still hold in this sensitivity analysis.
 

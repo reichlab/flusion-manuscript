@@ -15,15 +15,37 @@ importance <- importance |>
   group_by(feat, q_level) |>
   summarize(importance = mean(importance))
 
+clean_feat_names <- function(feat) {
+  feat[feat == "season_week"] <- "season week"
+  feat[feat == "delta_xmas"] <- "weeks from Christmas"
+  feat[feat == "log_pop"] <- "log(population)"
+  
+  feat <- gsub("inc_trans_cs_rollmean", "rolling mean", feat, fixed = TRUE)
+  feat <- gsub("inc_trans_cs_taylor", "Taylor poly.", feat, fixed = TRUE)
+  feat <- gsub("inc_trans_cs", "signal value", feat, fixed = TRUE)
+  feat <- gsub("source_", "source: ", feat, fixed = TRUE)
+  feat[feat == "source: hhs"] <- "source: nhsn"
+  feat <- gsub("location_", "location: ", feat, fixed = TRUE)
+  feat <- gsub("agg_level_", "agg. level: ", feat, fixed = TRUE)
+
+  feat <- gsub("t_sNone", "", feat, fixed = TRUE)
+  feat <- gsub("_d", ", d=", feat, fixed = TRUE)
+  feat <- gsub("_c", ", c=", feat, fixed = TRUE)
+  feat <- gsub("_w", ", w=", feat, fixed = TRUE)
+  feat <- gsub("_lag", ", lag=", feat, fixed = TRUE)
+}
+
 p <- importance |>
   group_by(feat) |>
   summarize(importance = mean(importance)) |>
   arrange(importance) |>
-  mutate(feat = factor(feat, levels = feat, ordered = TRUE)) |>
+  mutate(
+    feat_clean = clean_feat_names(feat),
+    feat = factor(feat_clean, levels = feat_clean, ordered = TRUE)) |>
   ggplot() +
     geom_col(mapping = aes(x = feat, y = importance)) +
-    xlab("feature name") +
-    ylab("importance score") +
+    xlab("Feature name") +
+    ylab("Importance score") +
     coord_flip() +
     theme_bw(base_size=9) +
     theme(
