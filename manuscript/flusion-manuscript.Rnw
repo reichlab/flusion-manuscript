@@ -69,30 +69,36 @@ These results indicate the value of sharing information across multiple location
 \section{Introduction}
 \label{sec:intro}
 
-There is a long history of forecasting seasonal influenza, often through formal collaborative forecasting exercises organized by the US Centers for Disease Control and Prevention (CDC).
-Starting during the 2013/2014 influenza season, the FluSight forecasting challenges have brought together teams of academic, industry and governmental researchers to produce probabilistic forecasts of influenza activity in the United States.\cite{biggerstaff_results_2016}
+Since the early 2010s, short-term forecasting for infectious diseases has become an increasingly common activity, often through collaborations between governmental and industry or academic partners.
+Starting during the 2013/2014 influenza season, the FluSight collaborative forecasting exercises organized by the US Centers for Disease Control and Prevention (CDC) have brought together teams of academic, industry and governmental researchers to produce probabilistic forecasts of influenza activity in the United States.\cite{biggerstaff_results_2016}
 After a pause during the first two years of the COVID-19 pandemic, this forecasting exercise restarted in the spring of 2022.\cite{us_centers_for_disease_control_and_prevention_flusight_2023}
 FluSight typically involves over 20 different teams submitting forecasts each week, using different methodologies and sometimes different data sources.
 Ensemble forecast techniques have been used by CDC and other groups to combine individual team submissions into a single consensus forecast, which typically have shown some of the most accurate performance overall.\cite{mcgowan_collaborative_2019,reich_accuracy_2019}
 A primary motivation for the FluSight challenges is to carefully evaluate forecasts against real data and to use them to improve situational awareness and yield more effective public health actions.\cite{lutz_applying_2019}
 
 
-A challenge in FluSight seasons in the seasons just following the COVID pandemic was that new data streams came online during the pandemic which were used as the ``ground truth'' target for these forecasting exercises. 
+A challenge in FluSight seasons just following the COVID pandemic was that new high-resolution and low-latency data streams came online during the pandemic, and were then used as the ``ground truth'' target for forecasting exercises. 
 For example, from 2022 through 2024, the forecasting targets for FluSight were been based on hospital admissions reported in the CDC’s National Healthcare Safety Network (NHSN) surveillance system.\cite{cdc_flusurveillance_overview}
 Reporting of influenza hospital admissions through NHSN began during the COVID pandemic, and as such the NHSN data have only a limited amount of information about influenza hospitalizations or historical seasonal patterns in influenza transmission.
 While the NHSN data surpassed previous surveillance systems in terms of spatial and temporal granularity, the lack of an extensive history of data for model training introduced challenges to learning about seasonal patterns in influenza burden in the US.  
-To address this challenge, for the 2023/2024 FluSight season we developed a new model, called `flusion`, which pulled in data from external data sources with a long history of observations.  This model was the top-performing model submitted to FluSight in this season.  The purpose of this paper is to describe the `flusion` model and provide insights into what aspects of its design were associated with its strong performance.
+To address this challenge, for the 2023/2024 FluSight season we developed a new model, called `flusion`, which pulled in data from external data sources with a longer history of observations.  
+This model was the top-performing model submitted to FluSight in the 2023/2024 season.  
+The purpose of this paper is to describe the `flusion` model and provide insights into what aspects of its design were associated with its strong performance.
 
-\begin{itemize}
-\item methods for infectious disease forecasting, including methods that integrate multiple data sources.
-    \begin{itemize}
-    \item David Farrow cmu thesis on data fusion
-    \item maybe papers using surveillance signals like Quidel?
-    \item maybe some covid papers using things like mobility data
-    \end{itemize}
-\end{itemize}
+Stimulated in large part by outbreak forecasting challenges organized by governmental agencies, there has been substantial methodological development in this area over the last 10 years, both for stand-alone and ensemble modeling strategies. [add citations to flusight, chikv, dengue, ebola, also ensemble papers]
+Most successful stand-alone approaches can be characterized broadly as methods that use statistical or machine learning methods in conjunction with conceptual models that are informed by infectious disease transmission dynamics, either explicitly through a compartmental transmission model or implicitly through inclusion of seasonality or observations from recent time-points.\cite{reich_collaborative_2019,lopez2024covidCase}
+The flusion model mostly fits into the machine learning model category, as it focuses largely on modeling the observed data, although with features that emphasize both seasonality as well as recent observations and recent trends as a way of encoding underlying transmission dynamics of influenza.
 
-In terms of methodology, our primary focus in this work is on forecasting using gradient boosting \cite{friedman2001gbm}. In particular, our work closely follows the approach of \cite{lainder2022forecastingGBT}, which was the leading approach in several time series forecasting competitions including strong performance for forecasting COVID-19 \cite{lopez2024covidCase}. Forecasting methods based on gradient boosting have been found to be effective more generally; for example, the majority of the top-performing competitors in the M5 forecast accuracy competition used gradient boosting \cite{makridakis2022m5}.
+A key area where the flusion model provides a methodological innovation is in how it leverages long historical time-series data that are closely related to the target data source that has little history.
+There is existing work that focuses on situations where auxiliary data signals related to a primary signal of interest are used to improve short-term predictions.
+For example, in settings where a primary signal has delayed or unreliable recent reporting, research has shown that other signals that are available contemporaneously or with a shorter lag can help inform estimation and prediction of trends.\cite{yang_accurate_2015,farrow_modeling_2016,osthus_even_2019,leuba_tracking_2020,mcdonald_can_2021,jahja_real-time_2022}
+Some of this work, and others, highlights how sharing contemporaneous information accross different locations can be helpful.\cite{farrow_modeling_2016,mcdonald_can_2021,osthus_multiscale_2021}
+In contrast, the flusion model, in addition to borrowing information across locations, augments a primary data signal with a very short history with other closely related signals that measure the same general system but for a longer history. 
+This approach bears a close resemblance to recent innovations in transfer learning, where models are trained on related tasks with a long history of observations followed by fine-tuning on a target task with a shorter history.[cite 1-2 transfer learning papers]
+To our knowledge, applying this approach to outbreak forecasting has not been described in the literature.
+The success of the flusion model in the 2023/2024 FluSight season suggests that this approach may be a promising direction, especially in the context of public health data modernization initiatives that may replace long-standing surveillance data systems with new data streams.
+
+In terms of underlying methodology, our primary focus in this work is on forecasting using gradient boosting \cite{friedman2001gbm}. In particular, our work closely follows the approach of \cite{lainder2022forecastingGBT}, which was the leading approach in several time series forecasting competitions including strong performance for forecasting COVID-19 \cite{lopez2024covidCase}. Forecasting methods based on gradient boosting have been found to be effective more generally; for example, the majority of the top-performing competitors in the M5 forecast accuracy competition used gradient boosting \cite{makridakis2022m5}.
 
 The remainder of this article is structured as follows. We begin with some context for our work, including a discussion of the data sources we use in section \ref{sec:data} and an overview of the FluSight forecasting exercise in \ref{sec:flusight}. We establish notation in section \ref{sec:notation} and describe our modeling approaches in section \ref{sec:model}, and then we discuss the performance of our real-time forecasts in section \ref{sec:real-time-results}. Section \ref{sec:post-hoc-results} details a series of ablation studies that provide insight about which aspects of our modeling approach were important to its success. We conclude in section \ref{sec:discussion}.
 
