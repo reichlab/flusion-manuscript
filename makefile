@@ -3,7 +3,7 @@ all: manuscript supplement
 manuscript: manuscript/flusion-manuscript.Rnw manuscript/flusion.bib code/utils.R artifacts/figures/data_overview.pdf artifacts/figures/data_standardized.pdf artifacts/figures/forecasts_flusight.pdf artifacts/figures/scores_flusight.pdf artifacts/scores/scores_by_model_flusight_all.csv artifacts/scores/scores_by_model_flusion_components.csv artifacts/scores/scores_by_model_joint_training.csv artifacts/scores/scores_by_model_flusion_data_adj.csv 
 	R -e "setwd('manuscript'); knitr::knit2pdf('flusion-manuscript.Rnw', bib_engine='biber')"
 
-supplement: manuscript/flusion-supplement.Rnw artifacts/figures/features.pdf artifacts/figures/feature_importance.pdf
+supplement: manuscript/flusion-supplement.Rnw artifacts/figures/features.pdf artifacts/figures/feature_importance.pdf artifacts/flusurv_burden_adj.csv
 	R -e "setwd('manuscript'); knitr::knit2pdf('flusion-supplement.Rnw', bib_engine='biber')"
 
 clean:
@@ -42,3 +42,7 @@ artifacts/scores/scores_by_model_%.csv \
 	artifacts/scores/scores_by_model_horizon_reference_date_%_without_revisions.csv: \
 	code/compute_scores_%.R artifacts/target_data.csv
 	Rscript $<
+
+# csv with burden adjustments for FluSurv-NET
+artifacts/flusurv_burden_adj.csv: code/save_flusurv_burden_table.py
+	python3 code/save_flusurv_burden_table.py

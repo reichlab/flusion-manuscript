@@ -24,8 +24,10 @@
 \def\bwr#1{{\color{violet}\textbf{BWR:[#1]}}}
 \def\ngr#1{{\color{blue}\textbf{NGR:[#1]}}}
 
-\usepackage{natbib}
-\bibliographystyle{unsrtnat-abbr}
+%\usepackage{natbib}
+%\bibliographystyle{unsrtnat-abbr}
+\usepackage{biblatex} %Imports biblatex package
+\addbibresource{flusion.bib} %Import the bibliography file
 
 
 \title{Flusion: Integrating multiple data sources for accurate influenza predictions \\
@@ -57,8 +59,39 @@ This document has supplemental materials.
 
 \section{Reporting adjustments for FluSurv-NET data}
 
+In this section, we describe the adjustments we made to the reported FluSurv-NET data. The measure of influenza activity reported by FluSurv-NET is the rate of positive influenza cases per 100,000 population in the catchment area of a reporting healthcare facility or group of facilities. For the purposes of FluSurv-NET, ``a case is defined as a person who is a resident in a defined FluSurv-NET catchment area and tests positive for influenza by a laboratory test ordered by a health care professional within 14 days prior to or during hospitalization'' \cite{cdc_flusurvnet}. This measure of influenza activity may be impacted by underdetection of influenza cases either if patients with influenza are not tested or if they are tested but the test generates a false negative result.
 
+The US Centers for Disease Control and Prevention (CDC) produces annual estimates of influenza disease burden at the national level that adjust for testing rates and test sensitivity, including point estimates of total nationwide influenza hospitalizations in each season along with 95\% uncertainty intervals \cite{cdc_flu_burden_methods, cdc_flu_burden}. We used these to estimate a season-specific scale up factor $\alpha$ that was used to adjust the FluSurv-NET data. This factor was obtained by solving the following equation for $\alpha$ based on the total hospitalization rate over the course of the season that was reported across the entire FluSurv-NET network, the point estimate of national hospital burden due to influenza from CDC, and the US population in units of 100,000 people as reported by the US Census Bureau for the first year of the influenza season:
+$$\alpha \cdot (\text{cumulative reported hospitalization rate, FluSurv-NET})
+= \frac{\text{National burden estimate}}{\text{100k US population}}$$
 
+Table \ref{tab:flusurv_burden_adj} summarizes these terms and the resulting estimated scale-up factors for each season with FluSurv-NET data in our training set. Note that the scale-up factors are larger in earlier seasons than later seasons, indicating that data from FluSurv-NET undercounted influenza activity more in earlier seasons.
+
+<<burden-adj, results='asis'>>=
+burden_adj <- read_csv("../artifacts/flusurv_burden_adj.csv") |>
+  dplyr::mutate(
+    `Season` = season,
+    `Cum. rate` = cum_rate,
+    `US population` = formatC(pop, big.mark = ",", digits=10),
+    `Est. burden (count)` = formatC(hosp_burden, big.mark = ",", digits=8),
+    `Est. burden (rate)` = hosp_burden / (pop / 100000),
+    `$\\alpha$` = adj_factor,
+    .keep = "none"
+  )
+
+table <- xtable::xtable(
+  burden_adj,
+  caption = "Reported data, intermediate calculations, and final estimates for FluSurv-NET burden adjustments in each training season where we used FluSurv-NET data. The 'Cum. rate' column shows the cumulative reported hospitalization rate over the course of the season for the entire FluSurv-NET network. The US populaton column shows an estimate of the US population size from the US Census Bureau in the first year of the season (e.g., the value shown for the 2010/11 season is the population estimate for 2010). The 'Est. burden (count)' column shows the point estimate of influenza hospitalization burden produced by CDC for each season, and the `Est. burden (rate)` column expresses these burden estimates as a rate per 100,000 population in the US by dividing the estimated burden count by the US population in units of 100,000 people. The scale-up factor $\\alpha$ is the ratio of the values in the 'Est. burden (rate)' and 'Cum. rate' columns.",
+  label = "tab:flusurv_burden_adj")
+
+align(table) <- rep("r", 7)
+digits(table) <- c(0, 0, 1, 0, 0, 1, 1)
+
+print(
+  table,
+  include.rownames = FALSE,
+  sanitize.text.function = function(x) {x})
+@
 
 \section{Features measuring local level, slope, and curvature of the surveillance signal}
 
@@ -98,7 +131,7 @@ Figure \ref{fig:forecasts_flusight} illustrates the values of these features for
 
 Note that at the end of the signal, only observations on or before the last time point are available. This motivates the use of a trailing window for feature calculation: with this choice, the features computed at both the end of the time series and at earlier time points can be expected to have similar characteristics as measures of local derivatives of the signal's trend. In contrast, if a centered window were used, estimates at earlier time points (when all observations within the centered window are available) would be more reliable than estimates at the end of the series.
 
-Importantly, we do not account for the history of data revisions when we calculate these features. For example, for model fitting on reference date $t$, training examples are assembled for past times $u < t$ that include features measuring the local level, slope, and curvature at those times $u$. Those features are calculated based on the latest available data at time $t$, not based on the data that would have been available at time $u$. This means that our model implicitly estimates the relationships between these features and the target when the features are calculated on finalized, fully reported data. However, when predictions are generated extending from the reference date $t$, those features are calculated at the end of the time series when reporting is more likely to be subsequently revised, leading to a mismatch between the data used for model fitting and the data used for prediction. This is a challenging problem to address in a setting like ours where the target data system has only a short reporting history and the characteristics of its revision process are not well known.
+Importantly, we do not account for the history of data revisions when we calculate these features. For example, for model fitting on reference date $t$, training examples are assembled for past times $u < t$ that include features measuring the local level, slope, and curvature at those times $u$. Those features are calculated based on the latest available data at time $t$, not based on the data that would have been available at time $u$. This means that our model implicitly estimates the relationships between these features and the target when the features are calculated on finalized, fully reported data. However, when predictions are generated extending from the reference date $t$, those features are calculated at the end of the time series when reported values more likely to be subsequently revised, leading to a mismatch between the data used for model fitting and the data used for prediction. This is a challenging problem to address in a setting like ours where the target data system has only a short reporting history and the characteristics of its revision process are not well known.
 
 Finally, we highlight that although features such as the rolling mean or the intercept of a Taylor polynomial only directly measure the local level of the signal, when their lags are also included as features they can provide information about trend as well. For example, if we see that the rolling mean at time $t$ is larger than the rolling mean at time $t-1$ we may infer that the value of the signal is rising.
 
@@ -322,6 +355,6 @@ table_2 <- c(table_2a, table_2b, table_2c)
 cat(table_2, sep = "\n")
 @
 
-\bibliography{flusion}
+\printbibliography
 
 \end{document}
