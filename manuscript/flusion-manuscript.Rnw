@@ -28,6 +28,12 @@
 \def\elr#1{{\color{cyan}\textbf{ELR:[#1]}}}
 \def\ngr#1{{\color{blue}\textbf{NGR:[#1]}}}
 
+\providecommand{\keywords}[1]
+{
+  \small	
+  \textbf{\textit{Keywords:}} #1
+}
+
 %\usepackage{natbib}
 \usepackage{biblatex} %Imports biblatex package
 \addbibresource{flusion.bib} %Import the bibliography file
@@ -39,6 +45,8 @@
 \author[1]{Nicholas G. Reich}
 \affil[1]{Department of Biostatistics and Epidemiology, University of Massachusetts, Amherst, MA, United States}
 \affil[2]{SAS Institute Inc., Cary, NC, United States}
+
+\date{}
 
 \begin{document}
 
@@ -72,6 +80,8 @@ In this article we investigate the factors contributing to Flusion's success, an
 These results indicate the value of sharing information across multiple locations and surveillance signals, especially when doing so adds to the pool of available training data.
 \end{abstract}
 
+\keywords{infectious disease, forecasting, gradient boosting, transfer learning}
+
 \section{Introduction}
 \label{sec:intro}
 
@@ -98,9 +108,12 @@ A key area where the Flusion model provides a methodological innovation is in ho
 There is existing work that focuses on situations where auxiliary data signals related to a primary signal of interest are used to improve short-term predictions.
 For example, in settings where a primary signal has delayed or unreliable recent reporting, research has shown that other signals that are available contemporaneously or with a shorter lag can help inform estimation and prediction of trends \cite{yang_accurate_2015,farrow_modeling_2016,osthus_even_2019,leuba_tracking_2020,mcdonald_can_2021,jahja_real-time_2022}.
 Some of these modeling efforts, among others, also highlight how sharing contemporaneous information across different locations can be helpful \cite{farrow_modeling_2016,mcdonald_can_2021,osthus_multiscale_2021}.
+
 In contrast, the Flusion model, in addition to borrowing information across locations, augments a primary data signal with a very short history with other closely related signals that measure the same general system but for a longer history. 
-This approach bears a close resemblance to recent innovations in transfer learning, where models are trained on related tasks with a long history of observations followed by fine-tuning on a target task with a shorter history.[cite 1-2 transfer learning papers]
-To our knowledge, applying this general approach to outbreak forecasting has not been described in the literature.
+This approach bears a close resemblance to multi-task learning and transfer learning, where models are trained on related tasks with a large number of available observations either simultaneously with training on more limited data for the primary task, or in a first stage that is followed by fine-tuning on data for the target task \cite{pan2009surveytransfer}.
+In a forecasting context, these methods have been used in domains such as energy use and climate control \cite{Ribeiro2018transferbuildingenergy, Grubinger2017transferclimatecontrol}.
+However, to our knowledge the literature contains only a few applications of this general approach to disease outbreak forecasting, and this work has focused on forecasting a pathogen of interest using data from other pathogens to inform model estimation \cite{Roster2022transfernewdiseases,Coelho2020transfermoquitoborne}.
+On the other hand, our work augments a signal measuring seasonal influenza in the US that has a limited history with other signals that measure the same disease system over a longer time span.
 The success of the Flusion model in the 2023/2024 FluSight season suggests that this approach may be a promising direction, especially in the context of public health data modernization initiatives that may replace long-standing surveillance data systems with new data streams.
 
 In terms of underlying methodology, our primary focus in this work is on forecasting using gradient boosting \cite{friedman2001gbm}. In particular, our work closely follows the approach of \cite{lainder2022forecastingGBT}, which was the leading approach in several time series forecasting competitions including strong performance for forecasting COVID-19 \cite{lopez2024covidCase}. Forecasting methods based on gradient boosting have been found to be effective more generally; for example, the majority of the top-performing competitors in the M5 forecast accuracy competition used gradient boosting \cite{makridakis2022m5}.
@@ -119,7 +132,7 @@ Our model used three measures of influenza activity (Figure \ref{fig:data_overvi
     \label{fig:data_overview}
 \end{figure}
 
-To address this limitation of the target surveillance signal, our model used two other measures of influenza activity that have a longer reporting history. The first of these was a measure of hospital admissions where the patient has a positive influenza test as reported by FluSurv-NET, expressed as a rate per 100,000 population in the catchment areas of selected hospital facilities \cite{cdc_FluSurv-NET}.
+To address this limitation of the target surveillance signal, our model used two other measures of influenza activity that have a longer reporting history. The first of these was a measure of hospital admissions where the patient has a positive influenza test as reported by FluSurv-NET, expressed as a rate per 100,000 population in the catchment areas of selected hospital facilities \cite{cdc_flusurvnet}.
 The other signal was ILI+, which is an approximate measure of the proportion of outpatient doctor visits where the patient has influenza that is derived by combining data from ILINet and WHO/NREVSS \cite{goldstein2011-predicting-epidemic-sizes-flu-strains,cdc_flusurveillance_overview}.
 As will be described further in section \ref{sec:model}, in this work our goal in using these data was to provide models with additional historical data to use for learning about trends in seasonal influenza activity. Because contemporaneous use of these signals was not our primary goal, and in order to avoid complications with integrating multiple data sources with different reporting lags and backfill behaviors, in this work we only used historical data prior to the 2023/24 season for these alternative data signals.
 

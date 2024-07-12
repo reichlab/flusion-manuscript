@@ -40,6 +40,8 @@
 \affil[1]{Department of Biostatistics and Epidemiology, University of Massachusetts, Amherst, MA, United States}
 \affil[2]{SAS Institute Inc., Cary, NC, United States}
 
+\date{}
+
 \begin{document}
 
 \maketitle
