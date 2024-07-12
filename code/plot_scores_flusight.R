@@ -233,7 +233,7 @@ print(
     theme_void(),
   vp = viewport(layout.pos.row = 3, layout.pos.col = 1)
 )
-grid.text("       Relative WIS",
+grid.text("       Relative MWIS",
   just = "center",
   rot = 90,
   gp = gpar(fontsize = 11),
