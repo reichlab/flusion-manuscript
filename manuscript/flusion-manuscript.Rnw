@@ -7,6 +7,7 @@
 \usepackage{bm}
 \usepackage{dsfont}
 \usepackage{hyperref}
+\usepackage{booktabs}
 
 \usepackage{float}
 
@@ -44,7 +45,7 @@
 \author[2]{Russell D. Wolfinger}
 \author[1]{Nicholas G. Reich}
 \affil[1]{Department of Biostatistics and Epidemiology, University of Massachusetts, Amherst, MA, United States}
-\affil[2]{SAS Institute Inc., Cary, NC, United States}
+\affil[2]{JMP Statistical Discovery, Cary, NC, United States}
 
 \date{}
 
@@ -103,6 +104,7 @@ The purpose of this paper is to describe the Flusion model and provide insights 
 Stimulated in large part by outbreak forecasting challenges organized by governmental agencies \cite[e.g., ][]{viboud_rapidd_2018,mcgowan_collaborative_2019,johansson_open_2019}, there has been substantial methodological development in the area of infectious disease forecasting over the last 10 years, both for stand-alone and ensemble modeling strategies \cite{yamana_superensemble_2016,reich_accuracy_2019,reis_superensemble_2019,ray_comparing_2023}.
 Most successful stand-alone approaches can be characterized broadly as using statistical or machine learning methods in conjunction with conceptual models that are informed by infectious disease transmission dynamics, either explicitly through a compartmental transmission model or implicitly through inclusion of seasonality or observations from recent time-points \cite{reich_collaborative_2019,lopez2024covidCase}.
 The Flusion model fits into the machine learning model category, although with features that emphasize both seasonality as well as recent observations and recent trends as a way of encoding underlying transmission dynamics of influenza.
+There has simultaneously been a large increase in worldwide participation in online data science competition sites like Kaggle, including many competitions with time series forecasting and even a series of five weeks of real time forecasting of COVID-19 in 2020 \cite{kaggle2020covidw1, kaggle2020covidw2, kaggle2020covidw3, kaggle2020covidw4, kaggle2020covidw5}.  The top performers in these competitions make heavy use of advanced feature engineering in conjunction with gradient boosted tree methods, using the popular packages XGBoost, LightGBM, and CatBoost.
 
 A key area where the Flusion model provides a methodological innovation is in how it leverages long historical time-series data that are closely related to the target data source that has little history.
 There is existing work that focuses on situations where auxiliary data signals related to a primary signal of interest are used to improve short-term predictions.
@@ -222,23 +224,44 @@ For forecast task $i$ with reference date $d(i)$ and forecast horizon $h(i)$, we
 Thus, the model was trained to predict the change in influenza activity over the next $h(i) + 1$ time steps.
 Predictions of this target were converted to the original scale by adding the last observed value ($\tilde{z}_{l(i), s(i), d(i) - 1}$) and inverting the initial data transformation operations described in section \ref{subsec:data_standardization}.
 
-For the primary GBQR model, the feature vector $x_i$ contained the following 114 features:
-\begin{enumerate}
-\item A one-hot encoding of the data source.
-\item A one-hot encoding of the location.
-\item A one-hot encoding of the spatial scale of the location (``state", ``region", or ``national").
-\item The population of the location.
-\item The week of the season with the most recent reported data, $d(i) - 1$.
-\item The difference between the week of the season with the most recent reported data and Christmas week; for instance, a value of 3 means that the most recent data report is for the week three weeks after Christmas.
-\item The coefficients of a degree 2 Taylor polynomial fit to the trailing $w$ weeks of data, where $w \in \{4, 6\}$, with the reference point for the polynomial set to the time $d(i) - 1$.  These coefficients are estimates of the local level, first derivative, and second derivative of the signal at the time $d(i) - 1$.
-\item The coefficients of a degree 1 Taylor polynomial fit to the trailing $w$ weeks of data, where $w \in \{3, 5\}$. These coefficients are estimates of the local level and first derivative of the signal at the time $d(i) - 1$.
-\item The rolling mean of the signal over the last $w$ weeks, where $w \in \{2, 4\}$.
-\item The values of all features from points 7, 8, and 9 at lags 1 and 2, representing estimates of the local level and first and second derivatives of the signal in each of the previous two weeks.
-\item The forecast horizon.
-\end{enumerate}
-The computation of features based on Taylor polynomials is described in more detail in supplemental section 3.
+For the primary GBQR model, the feature vector $x_i$ contained 114 features as outlined in table \ref{tab:features}. These features included information about the data source and location being forecasted, the time of season when the forecast was generated, the forecast horizon, and measures of the local level, trend, and curvature of the surveillance signal in the weeks leading up to the time $d(i)$. Measures of local level of the signal included the signal value itself, rolling means of the signal in a trailing window, and the intercepts of Taylor polynomials fit to a trailing window of observations; these Taylor polynomial fits were also used to obtain the features measuring local trend and curvature. More information about the calculation of these features is given in supplemental section 3.
 
-Measures of the local level of the surveillance signal (i.e., rolling means and the intercepts of Taylor polynomial fits) had a high feature importance in the primary GBQR model; see section \ref{sec:post-hoc-preprocessing} below and supplemental section 4 for more detail.  Starting in the eighth week of the season, on the reference date of December 2, 2023, we included a second variation on the GBQR model that was not allowed to see these ``local level" features. This was motivated by two considerations: (1) a model fit without features that had high importance in the primary GBQR model might introduce more model diversity to the Flusion ensemble; and (2) in seasons with particularly high or low incidence, measures of local level might not be a reliable indicator of the magnitude and direction of changes in future values of influenza activity. In experimental results below, we refer to this model variation as GBQR-no-level.
+\begin{table}[htbp]
+\centering
+\begin{tabular}{cp{11cm}c}
+\toprule
+Group & \multicolumn{1}{l}{Description} & Count \\
+\midrule
+1 & A one-hot encoding of the data source. & 3 \\
+\midrule
+2 & A one-hot encoding of the location. & 65 \\
+\midrule
+3 & A one-hot encoding of the spatial scale of the location (``state", ``region", or ``national"). & 3 \\
+\midrule
+4 & The population of the location. & 1 \\
+\midrule
+5 & The week of the season with the most recent reported data, $d(i) - 1$. & 1 \\
+\midrule
+6 & The difference between the week of the season with the most recent reported data and Christmas week; for instance, a value of 3 means that the most recent data report is for the week three weeks after Christmas. & 1 \\
+\midrule
+7 & The forecast horizon. & 1 \\
+\midrule
+8 & The most recent reported value of the surveillance signal, for the time $d(i) - 1$. & 1 \\
+\midrule
+9 & The coefficients of a degree 2 Taylor polynomial fit to the trailing $w$ weeks of data, where $w \in \{4, 6\}$, with the reference point for the polynomial set to the time $d(i) - 1$.  These coefficients are estimates of the local level, first derivative, and second derivative of the signal at the time $d(i) - 1$. & 6 \\
+\midrule
+10 & The coefficients of a degree 1 Taylor polynomial fit to the trailing $w$ weeks of data, where $w \in \{3, 5\}$. These coefficients are estimates of the local level and first derivative of the signal at the time $d(i) - 1$. & 4 \\
+\midrule
+11 & The rolling mean of the signal over the last $w$ weeks, where $w \in \{2, 4\}$. & 2 \\
+\midrule
+12 & The values of all features from groups 8 through 11 at lags 1 and 2, representing estimates of the local level and first and second derivatives of the signal in each of the previous two weeks. & 26 \\
+\bottomrule
+\end{tabular}
+\caption{Features used in the GBQR and GBQR-no-level models. There were 12 groups of features. The ``Count'' column gives the number of features in each group; there were 114 features in total across all groups. The GBQR-no-level model did not use the features from groups 8 through 12 that measured the local level of the signal. See supplemental section 3 for details of rolling mean and Taylor polynomial calculations.}
+\label{tab:features}
+\end{table}
+
+Measures of the local level of the surveillance signal (i.e., the reported signal value, rolling means and the intercepts of Taylor polynomial fits) had a high feature importance in the primary GBQR model; see section \ref{sec:post-hoc-preprocessing} below and supplemental section 4 for more detail.  Starting in the eighth week of the season, on the reference date of December 2, 2023, we included a second variation on the GBQR model that was not allowed to see these ``local level" features. This was motivated by two considerations: (1) a model fit without features that had high importance in the primary GBQR model might introduce more model diversity to the Flusion ensemble; and (2) in seasons with particularly high or low incidence, measures of local level might not be a reliable indicator of the magnitude and direction of changes in future values of influenza activity. In experimental results below, we refer to this model variation as GBQR-no-level.
 
 \subsection{Component Model 3: ARX}
 \label{subsec:model_arx}
@@ -280,7 +303,7 @@ Finally, in the submission for reference date of December 16, 2023, we dropped o
 
 \subsection{Software availability and reproducibility}
 
-Code for fitting models and generating predictions for real-time submissions and retrospective experiments is available at \url{https://github.com/reichlab/flusion}. Feature preprocessing functionality is implemented in a Python module at \url{https://github.com/reichlab/timeseriesutils/}, and the ARX model is implemented in a Python module at \url{https://github.com/elray1/sarix}. Code for analyses in the manuscript and supplement is available at \url{https://github.com/reichlab/flusion-manuscript}. The manuscript is generated with a reproducible workflow using Docker and Sweave.
+Code for fitting models and generating predictions for real-time submissions and retrospective experiments is available at \url{https://github.com/reichlab/flusion}. Feature preprocessing functionality is implemented in a Python module at \url{https://github.com/reichlab/timeseriesutils/}, and the ARX model is implemented in a Python module at \url{https://github.com/elray1/sarix}. Code for analyses in the manuscript and supplement is available at \url{https://github.com/reichlab/flusion-manuscript}. The manuscript is generated with a reproducible workflow using Docker \cite{merkel2014docker} and knitr \cite{xie2014knitr}. Analyses were conducted using R version 4.4.0 \cite{RSoftware} and Python version 3.10.12 \cite{PythonSoftware}.
 
 \section{Real-time performance: the 2023/24 FluSight season}
 \label{sec:real-time-results}
@@ -390,7 +413,7 @@ overall_scores_table <- make_scores_table(
 )
 
 print(overall_scores_table,
-      include.rownames = FALSE, sanitize.text.function = function(x) {x})
+      include.rownames = FALSE, sanitize.text.function = function(x) {x}, booktabs=TRUE)
 @
 
 \begin{figure}[hpt]
@@ -438,7 +461,7 @@ component_scores_table <- make_scores_table(
 table_2a <- capture.output(
   print(component_scores_table,
         include.rownames = FALSE, sanitize.text.function = function(x) {x},
-        table.placement = "htbp")
+        table.placement = "htbp", booktabs = TRUE)
 )
 table_2a <- c(
   table_2a[1:5],
@@ -465,7 +488,7 @@ joint_training_scores_table <- make_scores_table(
 table_2b <- capture.output(
   print(joint_training_scores_table,
         include.rownames = FALSE, sanitize.text.function = function(x) {x},
-        table.placement = "htbp")
+        table.placement = "htbp", booktabs = TRUE)
 )
 table_2b <- c(
   "\\\\",
@@ -492,7 +515,7 @@ preprocessing_scores_table <- make_scores_table(
 table_2c <- capture.output(
   print(preprocessing_scores_table,
         include.rownames = FALSE, sanitize.text.function = function(x) {x},
-        table.placement = "htbp")
+        table.placement = "htbp", booktabs = TRUE)
 )
 
 table_2c <- c(
