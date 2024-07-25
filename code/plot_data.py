@@ -55,15 +55,35 @@ ax[2].plot(
     label = 'Unadjusted')
 ax[2].set_ylabel('ILINet')
 
+# shade offseason
+offseason_starts = ilinet_adj.query("location == 'National' and season_week == 41")['wk_end_date']
+offseason_starts = list(offseason_starts)
+offseason_ends = ilinet_adj.query("location == 'National' and season_week == 10")['wk_end_date'] - datetime.timedelta(7)
+last_offseason_end = hhs.query('season_week == 10 and season == "2023/24"')['wk_end_date'] - datetime.timedelta(7)
+offseason_ends = list(offseason_ends)[1:] + list(last_offseason_end)
+
+active_season_inds_by_ax = [
+    [-1],
+    list(range(13, 22)),
+    list(range(10)) + list(range(13, 22)) + [-1]
+]
+
+for i in range(3):
+    for j in active_season_inds_by_ax[i]:
+        ax[i].axvspan(offseason_starts[j],
+                      offseason_ends[j],
+                      facecolor='0.2', alpha=0.2)
+
+
 # shade pandemic seasons
 for i in range(3):
     ax[i].axvspan(datetime.date.fromisoformat('2020-06-01'),
                   datetime.date.fromisoformat('2022-09-01'),
-                  facecolor='0.2', alpha=0.3)
+                  facecolor='0.2', alpha=0.4)
 
 ax[2].axvspan(datetime.date.fromisoformat('2008-06-01'),
               datetime.date.fromisoformat('2010-09-01'),
-              facecolor='0.2', alpha=0.3)
+              facecolor='0.2', alpha=0.4)
 
 
 # horizontal axis label
