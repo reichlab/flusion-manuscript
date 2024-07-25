@@ -479,6 +479,9 @@ joint_training_scores <- read_csv("../artifacts/scores/scores_by_model_joint_tra
       model == "UMass-gbq_qr_hhs_only" ~ "GBQR-only-NHSN",
       model == "FluSight-baseline" ~ "Baseline-flat"
     )
+  ) |>
+  rbind(
+    component_scores |> filter(Model == "Flusion")
   )
 
 joint_training_scores_table <- make_scores_table(
@@ -495,7 +498,7 @@ table_2b <- capture.output(
 table_2b <- c(
   "\\\\",
   "\\multicolumn{8}{l}{Experiment B: Reduced training data} \\\\",
-  table_2b[6:13]
+  table_2b[6:14]
 )
 
 preprocessing_scores <- read_csv("../artifacts/scores/scores_by_model_flusion_data_adj.csv") |>
@@ -506,6 +509,9 @@ preprocessing_scores <- read_csv("../artifacts/scores/scores_by_model_flusion_da
       model == "UMass-gbq_qr_no_transform" ~ "GBQR-no-transform",
       model == "FluSight-baseline" ~ "Baseline-flat"
     )
+  ) |>
+  rbind(
+    component_scores |> filter(Model == "Flusion")
   )
 
 preprocessing_scores_table <- make_scores_table(
@@ -523,7 +529,7 @@ table_2c <- capture.output(
 table_2c <- c(
   "\\\\",
   "\\multicolumn{8}{l}{Experiment C: Data preprocessing} \\\\",
-  table_2c[6:17]
+  table_2c[6:18]
 )
 
 table_2 <- c(table_2a, table_2b, table_2c)
