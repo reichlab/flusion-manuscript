@@ -135,6 +135,17 @@ scores_q_coverage <- scores_by_model_horizon |>
     coverage_delta = empirical - nominal)
 
 p_q_coverage_by_horizon <- ggplot() +
+  geom_rect(
+    data = data.frame(
+      xmin = c(0.5, 0),
+      xmax = c(1, 0.5),
+      ymin = c(0, -1),
+      ymax = c(1, 0)
+    ),
+    mapping = aes(xmin = xmin, ymin = ymin, xmax = xmax, ymax = ymax),
+    alpha = 0.2,
+    fill = "cornflowerblue"
+  ) +
   geom_line(
     data = scores_q_coverage,
     mapping = aes(x = nominal,
@@ -152,18 +163,31 @@ p_q_coverage_by_horizon <- ggplot() +
                   linetype = model_anon,
                   linewidth = is_other_model,
                   group = model)) +
+  geom_text(
+    data = data.frame(
+      horizon = 0,
+      x = c(0.25, 0.75),
+      y = c(-0.3, 0.2),
+      label = c("conservative\nlower tail", "conservative\nupper tail")
+    ),
+    mapping = aes(x = x, y = y, label = label),
+    size = 8,
+    size.unit = "pt",
+    color = "#444444",
+    parse = FALSE
+  ) +
   scale_color_manual("Model", values = model_colors) +
   scale_linetype_manual("Model", values = model_linetypes) +
   scale_linewidth_manual(values = c("TRUE" = 0.25, "FALSE" = 1)) +
   guides(linewidth = "none") +
   facet_wrap(~ horizon, ncol = 1, labeller = horizon_labeller) +
-  # coord_cartesian(ylim = c(0, 2.5)) +
+  coord_cartesian(xlim = c(0, 1), ylim = c(-0.4, 0.3), expand = FALSE) +
   xlab("Nominal coverage rate") +
   ylab("Empirical minus nominal coverage rate") +
   ggtitle("(c) Forecast calibration") +
   theme_bw() +
   theme(legend.position = "none",
-        plot.margin = margin(0, 0, 0, 0, "cm"))
+        plot.margin = margin(0, 0.1, 0, 0, "cm"))
 
 p_q_coverage_by_horizon
 
