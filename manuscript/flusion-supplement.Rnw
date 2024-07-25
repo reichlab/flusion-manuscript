@@ -38,7 +38,7 @@
 \author[2]{Russell D. Wolfinger}
 \author[1]{Nicholas G. Reich}
 \affil[1]{Department of Biostatistics and Epidemiology, University of Massachusetts, Amherst, MA, United States}
-\affil[2]{SAS Institute Inc., Cary, NC, United States}
+\affil[2]{JMP Statistical Discovery, Cary, NC, United States}
 
 \date{}
 
