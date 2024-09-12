@@ -12,6 +12,31 @@ keywords = {Decision making, Density forecasts, Incentive-compatible compensatio
 abstract = {Loss functions play a central role in the theory and practice of forecasting. If the loss function is quadratic, the mean of the predictive distribution is the unique optimal point predictor. If the loss is symmetric piecewise linear, any median is an optimal point forecast. Quantiles arise as optimal point forecasts under a general class of economically relevant loss functions, which nests the asymmetric piecewise linear loss, and which we refer to as generalized piecewise linear (GPL). The level of the quantile depends on a generic asymmetry parameter which reflects the possibly distinct costs of underprediction and overprediction. Conversely, a loss function for which quantiles are optimal point forecasts is necessarily GPL. We review characterizations of this type in the work of Thomson, Saerens and Komunjer, and relate to proper scoring rules, incentive-compatible compensation schemes and quantile regression. In the empirical part of the paper, the relevance of decision theoretic guidance in the transition from a predictive distribution to a point forecast is illustrated using the Bank of England’s density forecasts of United Kingdom inflation rates, and probabilistic predictions of wind energy resources in the Pacific Northwest.}
 }
 
+@article{batchelor1995forecasterdiversity,
+  title={Forecaster diversity and the benefits of combining forecasts},
+  author={Batchelor, Roy and Dua, Pami},
+  journal={Management Science},
+  volume={41},
+  number={1},
+  pages={68--75},
+  year={1995},
+  doi={10.1287/mnsc.41.1.68},
+  publisher={INFORMS}
+}
+
+@article{kandula2017typefluforecast,
+    author = {Kandula, Sasikiran and Yang, Wan and Shaman, Jeffrey},
+    title = "{Type- and Subtype-Specific Influenza Forecast}",
+    journal = {American Journal of Epidemiology},
+    volume = {185},
+    number = {5},
+    pages = {395-402},
+    year = {2017},
+    month = {02},
+    abstract = "{Prediction of the growth and decline of infectious disease incidence has advanced considerably in recent years. As these forecasts improve, their public health utility should increase, particularly as interventions are developed that make explicit use of forecast information. It is the task of the research community to increase the content and improve the accuracy of these infectious disease predictions. Presently, operational real-time forecasts of total influenza incidence are produced at the municipal and state level in the United States. These forecasts are generated using ensemble simulations depicting local influenza transmission dynamics, which have been optimized prior to forecast with observations of influenza incidence and data assimilation methods. Here, we explore whether forecasts targeted to predict influenza by type and subtype during 2003–2015 in the United States were more or less accurate than forecasts targeted to predict total influenza incidence. We found that forecasts separated by type/subtype generally produced more accurate predictions and, when summed, produced more accurate predictions of total influenza incidence. These findings indicate that monitoring influenza by type and subtype not only provides more detailed observational content but supports more accurate forecasting. More accurate forecasting can help officials better respond to and plan for current and future influenza activity.}",
+    issn = {0002-9262},
+    doi = {10.1093/aje/kww211}}
+
 @article{reis_superensemble_2019,
 	title = {Superensemble forecast of respiratory syncytial virus outbreaks at national, regional, and state levels in the {United} {States}},
 	volume = {26},
@@ -148,20 +173,6 @@ abstract = {Loss functions play a central role in the theory and practice of for
 	file = {Full Text PDF:/Users/nick/Zotero/storage/88MKRTW5/Leuba et al. - 2020 - Tracking and predicting U.S. influenza activity wi.pdf:application/pdf},
 }
 
-@article{ATHANASOPOULOS2024forecast_reconciliation_review,
-title = {Forecast reconciliation: A review},
-journal = {International Journal of Forecasting},
-volume = {40},
-number = {2},
-pages = {430-456},
-year = {2024},
-issn = {0169-2070},
-doi = {https://doi.org/10.1016/j.ijforecast.2023.10.010},
-author = {George Athanasopoulos and Rob J. Hyndman and Nikolaos Kourentzes and Anastasios Panagiotelis},
-keywords = {Aggregation, Coherence, Cross-temporal, Hierarchical time series, Grouped time series, Temporal aggregation},
-abstract = {Collections of time series formed via aggregation are prevalent in many fields. These are commonly referred to as hierarchical time series and may be constructed cross-sectionally across different variables, temporally by aggregating a single series at different frequencies, or even generalised beyond aggregation as time series that respect linear constraints. When forecasting such time series, a desirable condition is for forecasts to be coherent: to respect the constraints. The past decades have seen substantial growth in this field with the development of reconciliation methods that ensure coherent forecasts and improve forecast accuracy. This paper serves as a comprehensive review of forecast reconciliation and an entry point for researchers and practitioners dealing with hierarchical time series. The scope of the article includes perspectives on forecast reconciliation from machine learning, Bayesian statistics and probabilistic forecasting, as well as applications in economics, energy, tourism, retail demand and demography.}
-}
-
 @article{mcdonald_can_2021,
 	title = {Can auxiliary indicators improve {COVID}-19 forecasting and hotspot prediction?},
 	volume = {118},
@@ -235,17 +246,6 @@ abstract = {Collections of time series formed via aggregation are prevalent in m
 	keywords = {Computer Simulation, Disease Outbreaks, forecasting, Forecasting, Humans, infectious disease, influenza, Influenza, Human, Models, Statistical, public health, Public Health, Seasons, statistics, United States},
 	pages = {3146--3154},
 	file = {Full Text:/Users/nick/Zotero/storage/ZTME584W/Reich et al. - 2019 - A collaborative multiyear, multimodel assessment o.pdf:application/pdf},
-}
-
-@article{mathis2024flusighteval,
-  title={Evaluation of FluSight influenza forecasting in the 2021--22 and 2022--23 seasons with a new target laboratory-confirmed influenza hospitalizations},
-  author={Mathis, Sarabeth M and Webber, Alexander E and Le{\'o}n, Tom{\'a}s M and Murray, Erin L and Sun, Monica and White, Lauren A and Brooks, Logan C and Green, Alden and Hu, Addison J and Rosenfeld, Roni and others},
-  journal={Nature communications},
-  volume={15},
-  number={1},
-  pages={6289},
-  year={2024},
-  publisher={Nature Publishing Group UK London}
 }
 
 @misc{nndss_2024,
@@ -357,43 +357,6 @@ abstract = {Collections of time series formed via aggregation are prevalent in m
 	file = {Full Text PDF:/Users/nick/Zotero/storage/EVQTAKL9/Lutz et al. - 2019 - Applying infectious disease forecasting to public .pdf:application/pdf;Snapshot:/Users/nick/Zotero/storage/XTZ6TZDM/s12889-019-7966-8.html:text/html},
 }
 
-@article{wallinga_optimizing_2010,
-	title = {Optimizing infectious disease interventions during an emerging epidemic},
-	volume = {107},
-	issn = {0027-8424, 1091-6490},
-	url = {https://www.pnas.org/content/107/2/923},
-	doi = {10.1073/pnas.0908491107},
-	abstract = {The emergence and global impact of the novel influenza A(H1N1)v highlights the continuous threat to public health posed by a steady stream of new and unexpected infectious disease outbreaks in animals and humans. Once an emerging epidemic is detected, public health authorities will attempt to mitigate the epidemic by, among other measures, reducing further spread as much as possible. Scarce and/or costly control measures such as vaccines, anti-infective drugs, and social distancing must be allocated while epidemiological characteristics of the disease remain uncertain. Here we present first principles for allocating scarce resources with limited data. We show that under a broad class of assumptions, the simple rule of targeting intervention measures at the group with the highest risk of infection per individual will achieve the largest reduction in the transmission potential of a novel infection. For vaccination of susceptible persons, the appropriate risk measure is force of infection; for social distancing, the appropriate risk measure is incidence of infection. Unlike existing methods that rely on detailed knowledge of group-specific transmission rates, the method described here can be implemented using only data that are readily available during an epidemic, and allows ready adaptation as the epidemic progresses. The need to observe risk of infection helps to focus the ongoing planning and design of new infectious disease surveillance programs; from the presented first principles for allocating scarce resources, we can adjust the prioritization of groups for intervention when new observations on an emerging epidemic become available.},
-	pages = {923--928},
-	number = {2},
-	journal = {Proceedings of the National Academy of Sciences},
-	shortjournal = {{PNAS}},
-	author = {Wallinga, Jacco and Boven, Michiel van and Lipsitch, Marc},
-	urldate = {2021-11-30},
-	date = {2010-01-12},
-	year = {2010},
-	langid = {english},
-	pmid = {20080777},
-	keywords = {human influenza, immunization, mathematical model, pandemic, school closure},
-}
-
-@article{lipsitch_improving_2011,
-	title = {Improving the Evidence Base for Decision Making During a Pandemic: The Example of 2009 Influenza {A}/{H1N1}},
-	volume = {9},
-	issn = {1538-7135},
-	url = {https://www.liebertpub.com/doi/full/10.1089/bsp.2011.0007},
-	doi = {10.1089/bsp.2011.0007},
-	shorttitle = {Improving the Evidence Base for Decision Making During a Pandemic},
-	abstract = {This article synthesizes discussions held during an internationalmeeting, “Surveillance {forDecisionMaking}: The Example of 2009 Pandemic Influenza A/H1N1,” held at Harvard School of Public Health in June 2010. It defines the needs for surveillance in terms of the key decisions thatmust be made in response to a pandemic: how large a response to mount and which control measures to implement, for whom, and when. The article describes the sources of surveillance and other population-based data that can form the basis for such evidence, and the interpretive tools needed to process raw surveillance data. It concludes with key lessons of the 2009 pandemic for designing and planning surveillance in the future.},
-	pages = {89--115},
-	number = {2},
-	journal = {Biosecurity and Bioterrorism: Biodefense Strategy, Practice, and Science},
-	author = {Lipsitch, Marc and Finelli, Lyn and Heffernan, Richard T. and Leung, Gabriel M. and Redd; for the 2009 H1N1 Surveillance Group, Stephen C.},
-	urldate = {2021-11-30},
-	date = {2011-06-01},
-	year = {2011}
-}
-
 @article{biggerstaff_results_2016,
 	title = {Results from the {C}enters for {D}isease {C}ontrol and {P}revention’s predict the 2013–2014 {Influenza} {Season} {Challenge}},
 	volume = {16},
@@ -473,13 +436,6 @@ abstract = {Collections of time series formed via aggregation are prevalent in m
   month = nov,
   year = {2019},
   urldate = {2024-07-11}
-}
-
-@misc{cdc_flusight_repo,
-  author = {Centers for Disease Control and Prevention},
-  title = {FluSight-forecast-hub},
-  url = {https://github.com/cdcepi/FluSight-forecast-hub/},
-  urldate = {2024-09-12}
 }
 
 @article{Coelho2020transfermoquitoborne,
@@ -669,17 +625,6 @@ abstract = {This paper presents an online transfer learning framework for improv
 	journal = {medRxiv}
 }
 
-@article {Benefield2024imputationepiforecasting,
-	author = {Benefield, Amy E. and Williams, Desiree and Nagraj, VP},
-	title = {An Imputation-Based Approach for Augmenting Sparse Epidemiological Signals},
-	elocation-id = {2024.07.31.24311314},
-	year = {2024},
-	doi = {10.1101/2024.07.31.24311314},
-	publisher = {Cold Spring Harbor Laboratory Press},
-	abstract = {Near-term disease forecasting and scenario projection efforts rely on the availability of data to train and evaluate model performance. In most cases, more extensive epidemiological time series data can lead to better modeling results and improved public health insights. Here we describe a procedure to augment an epidemiological time series. We used reported flu hospitalization data from FluSurv-NET and the National Healthcare Safety Network to estimate a complete time series of flu hospitalization counts dating back to 2009. The augmentation process includes concatenation, interpolation, extrapolation, and imputation steps, each designed to address specific data gaps. We demonstrate the forecasting performance gain when the extended time series is used to train flu hospitalization models at the state and national level.Competing Interest StatementThe authors have declared no competing interest.Funding StatementThis work was supported in part by a subaward to Signature Science, LLC from the Council of State and Territorial Epidemiologists (CSTE) via the Centers for Disease Control and Prevention (CDC) Cooperative Agreement No. NU38OT000297.Author DeclarationsI confirm all relevant ethical guidelines have been followed, and any necessary IRB and/or ethics committee approvals have been obtained.YesThe details of the IRB/oversight body that provided approval or exemption for the research described are given below:The study used ONLY openly available human data that were originally located at: https://healthdata.gov/Hospital/COVID-19-Reported-Patient-Impact-and-Hospital-Capa/g62h-syeh/about_data and https://gis.cdc.gov/GRASP/Fluview/FluHospRates.html I confirm that all necessary patient/participant consent has been obtained and the appropriate institutional forms have been archived, and that any patient/participant/sample identifiers included were not known to anyone (e.g., hospital staff, patients or participants themselves) outside the research group so cannot be used to identify individuals.YesI understand that all clinical trials and any other prospective interventional studies must be registered with an ICMJE-approved registry, such as ClinicalTrials.gov. I confirm that any such study reported in the manuscript has been registered and the trial registration ID is provided (note: if posting a prospective study registered retrospectively, please provide a statement in the trial ID field explaining why the study was not registered in advance).YesI have followed all appropriate research reporting guidelines, such as any relevant EQUATOR Network research reporting checklist(s) and other pertinent material, if applicable.YesAll data and code produced are available online at: https://zenodo.org/records/13146377 https://zenodo.org/records/13146377},
-	journal = {medRxiv}
-}
-
 @article{Montero2021localglobalforecast,
 title = {Principles and algorithms for forecasting groups of time series: Locality and globality},
 journal = {International Journal of Forecasting},
@@ -700,26 +645,6 @@ abstract = {Global methods that fit a single forecasting method to all time seri
     year={2023},
 	doi = {10.48550/arXiv.2211.14730},
 	journal = {arXiv}
-}
-
-@article{castro2020turningnoforecast,
-  title={The turning point and end of an expanding epidemic cannot be precisely forecast},
-  author={Castro, Mario and Ares, Sa{\'u}l and Cuesta, Jos{\'e} A and Manrubia, Susanna},
-  journal={Proceedings of the National Academy of Sciences},
-  volume={117},
-  number={42},
-  pages={26190--26196},
-  year={2020},
-  publisher={National Acad Sciences},
-  doi={10.1073/pnas.2007868117}
-}
-
-@article{thivierge2024doesspatialinformationimproveflu,
-    title = {Does Spatial Information Improve Influenza Forecasting?}, 
-    author = {Gabrielle Thivierge and Aaron Rumack and F. William Townes},
-    year = {2024},
-    doi = {10.48550/arXiv.2408.12722},
-    journal = {arXiv}
 }
 
 @article{pan2009surveytransfer,
