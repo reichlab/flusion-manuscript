@@ -1,10 +1,15 @@
-all: manuscript/flusion-manuscript.pdf manuscript/flusion-supplement.pdf manuscript/epidemics-submission/sub2/flusion-manuscript-diff.tex manuscript/epidemics-submission/sub2/review-response.pdf
+all: manuscript/flusion-manuscript.pdf manuscript/flusion-supplement.pdf manuscript/flusion-manuscript-diff.pdf manuscript/flusion-supplement-diff.pdf manuscript/epidemics-submission/sub2/review-response.pdf
 
 manuscript/epidemics-submission/sub2/review-response.pdf: manuscript/epidemics-submission/sub2/review-response.Rnw
 	R -e "setwd('manuscript/epidemics-submission/sub2'); knitr::knit2pdf('review-response.Rnw', bib_engine='biber')"
 
-manuscript/epidemics-submission/sub2/flusion-manuscript-diff.tex: manuscript/flusion-manuscript.pdf
-	latexdiff manuscript/epidemics-submission/sub1/flusion-manuscript.tex manuscript/flusion-manuscript.tex > manuscript/epidemics-submission/sub2/flusion-manuscript-diff.tex
+manuscript/flusion-manuscript-diff.pdf: manuscript/flusion-manuscript.tex
+	latexdiff manuscript/epidemics-submission/sub1/flusion-manuscript.tex manuscript/flusion-manuscript.tex > manuscript/flusion-manuscript-diff.tex
+	cd manuscript && pdflatex -interaction=nonstopmode flusion-manuscript-diff && biber flusion-manuscript-diff && pdflatex -interaction=nonstopmode flusion-manuscript-diff
+
+manuscript/flusion-supplement-diff.pdf: manuscript/flusion-supplement.tex
+	latexdiff manuscript/epidemics-submission/sub1/flusion-supplement.tex manuscript/flusion-supplement.tex > manuscript/flusion-supplement-diff.tex
+	cd manuscript && pdflatex -interaction=nonstopmode flusion-supplement-diff && biber flusion-supplement-diff && pdflatex -interaction=nonstopmode flusion-supplement-diff
 
 manuscript/flusion-manuscript.pdf: manuscript/flusion-manuscript.Rnw manuscript/flusion.bib code/utils.R artifacts/figures/data_overview.pdf artifacts/figures/data_standardized.pdf artifacts/figures/forecasts_flusight.pdf artifacts/figures/scores_flusight.pdf artifacts/scores/scores_by_model_flusight_all.csv artifacts/scores/scores_by_model_flusion_components.csv artifacts/scores/scores_by_model_joint_training.csv artifacts/scores/scores_by_model_flusion_data_adj.csv 
 	R -e "setwd('manuscript'); knitr::knit2pdf('flusion-manuscript.Rnw', bib_engine='biber')"
