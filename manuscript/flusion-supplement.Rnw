@@ -63,7 +63,7 @@ source("../code/utils.R")
 
 \section{Introduction}
 
-This document provides supplemental analyses and results for the Flusion manuscript. Section \ref{sec:flusurv_burden_adj} describes the approach we use to adjusting the FluSurv-NET data to account for testing rates and test sensitivity in that surveillance system.  Section \ref{sec:feats} describes the features used in the GBQR model that summarize local behavior of the target surveillance signal.  Section \ref{sec:feature_importance} presents results about the importance of the features used by the GBQR model. Sections \ref{sec:flusight_sensitivity} and \ref{sec:experiments_sensitivity} describe sensitivity analyses investigating whether the forecast evaluation results in the main text are impacted by data revisions.
+This document provides supplemental analyses and results for the Flusion manuscript. Section \ref{sec:flusurv_burden_adj} describes the approach we use to adjusting the FluSurv-NET data to account for testing rates and test sensitivity in that surveillance system.  Section \ref{sec:feats} describes the features used in the GBQR model that summarize local behavior of the target surveillance signal. Section \ref{sec:feature_importance} presents results about the importance of the features used by the GBQR model. Section \ref{sec:flusight_plots} contains plots of real-time forecasts produced by Flusion, the FluSight ensemble, and the baseline models in all locations. Section \ref{sec:flusight_wis_by_horizon} shows mean weighted interval scores broken down by the forecast horizon. Sections \ref{sec:flusight_sensitivity} and \ref{sec:experiments_sensitivity} describe sensitivity analyses investigating whether the forecast evaluation results in the main text are impacted by data revisions.
 
 \section{Reporting adjustments for FluSurv-NET data}
 \label{sec:flusurv_burden_adj}
@@ -90,7 +90,7 @@ burden_adj <- read_csv("../artifacts/flusurv_burden_adj.csv") |>
 
 table <- xtable::xtable(
   burden_adj,
-  caption = "Reported data, intermediate calculations, and final estimates for FluSurv-NET burden adjustments in each training season where we used FluSurv-NET data. The 'Cum. rate' column shows the cumulative reported hospitalization rate over the course of the season for the entire FluSurv-NET network. The US populaton column shows an estimate of the US population size from the US Census Bureau in the first year of the season (e.g., the value shown for the 2010/11 season is the population estimate for 2010). The 'Est. burden (count)' column shows the point estimate of influenza hospitalization burden produced by CDC for each season, and the `Est. burden (rate)` column expresses these burden estimates as a rate per 100,000 population in the US by dividing the estimated burden count by the US population in units of 100,000 people. The scale-up factor $\\alpha$ is the ratio of the values in the 'Est. burden (rate)' and 'Cum. rate' columns.",
+  caption = "Reported data, intermediate calculations, and final estimates for FluSurv-NET burden adjustments in each training season where we used FluSurv-NET data. The `Cum. rate' column shows the cumulative reported hospitalization rate over the course of the season for the entire FluSurv-NET network. The US populaton column shows an estimate of the US population size from the US Census Bureau in the first year of the season (e.g., the value shown for the 2010/11 season is the population estimate for 2010). The `Est. burden (count)' column shows the point estimate of influenza hospitalization burden produced by CDC for each season, and the `Est. burden (rate)' column expresses these burden estimates as a rate per 100,000 population in the US by dividing the estimated burden count by the US population in units of 100,000 people. The scale-up factor $\\alpha$ is the ratio of the values in the `Est. burden (rate)' and `Cum. rate' columns.",
   label = "tab:flusurv_burden_adj")
 
 align(table) <- rep("r", 7)
@@ -157,6 +157,65 @@ Figure \ref{fig:feature_importance} shows feature importance scores for the GBQR
     \label{fig:feature_importance}
 \end{figure}
 
+\section{FluSight results: plots of forecasts for all locations}
+\label{sec:flusight_plots}
+
+Figure 3 in the main text showed plots of forecasts from the baseline models, the FluSight ensemble, and the Flusion model for the 6 states with the largest total reported influenza hospitalizations over the course of the 2023/24 season. Supplemental figures 3 through 8 show these forecasts for all states.
+
+\begin{figure}[!htp]
+    \centering
+    \includegraphics[width=\textwidth]{../artifacts/figures/forecasts_flusight_all_models_p1.pdf}
+    \caption{Influenza data and forecasts for 9 state-level jurisdictions. Accross supplemental figures 3 through 8 and within each figure, states are shown in decreasing order of cumulative hospital admissions during the 2023/24 season. To avoid overplotting, in this figure forecasts from every fourth reference date are shown; evaluations include all reference dates. Forecasts are represented by the predictive median (black lines) and 50\% and 95\% prediction intervals (blue shaded regions). Solid orange lines show the finalized admission counts reported as of May 1, 2024, while dotted orange lines show the initial reported values that were available on the date predictions were generated.}
+    \label{fig:forecasts_flusight_1}
+\end{figure}
+
+\begin{figure}[!htp]
+    \centering
+    \includegraphics[width=\textwidth]{../artifacts/figures/forecasts_flusight_all_models_p2.pdf}
+    \caption{Influenza data and forecasts for 9 state-level jurisdictions. Accross supplemental figures 3 through 8 and within each figure, states are shown in decreasing order of cumulative hospital admissions during the 2023/24 season. To avoid overplotting, in this figure forecasts from every fourth reference date are shown; evaluations include all reference dates. Forecasts are represented by the predictive median (black lines) and 50\% and 95\% prediction intervals (blue shaded regions). Solid orange lines show the finalized admission counts reported as of May 1, 2024, while dotted orange lines show the initial reported values that were available on the date predictions were generated.}
+    \label{fig:forecasts_flusight_2}
+\end{figure}
+
+\begin{figure}[!htp]
+    \centering
+    \includegraphics[width=\textwidth]{../artifacts/figures/forecasts_flusight_all_models_p3.pdf}
+    \caption{Influenza data and forecasts for 9 state-level jurisdictions. Accross supplemental figures 3 through 8 and within each figure, states are shown in decreasing order of cumulative hospital admissions during the 2023/24 season. To avoid overplotting, in this figure forecasts from every fourth reference date are shown; evaluations include all reference dates. Forecasts are represented by the predictive median (black lines) and 50\% and 95\% prediction intervals (blue shaded regions). Solid orange lines show the finalized admission counts reported as of May 1, 2024, while dotted orange lines show the initial reported values that were available on the date predictions were generated.}
+    \label{fig:forecasts_flusight_3}
+\end{figure}
+
+\begin{figure}[!htp]
+    \centering
+    \includegraphics[width=\textwidth]{../artifacts/figures/forecasts_flusight_all_models_p4.pdf}
+    \caption{Influenza data and forecasts for 9 state-level jurisdictions. Accross supplemental figures 3 through 8 and within each figure, states are shown in decreasing order of cumulative hospital admissions during the 2023/24 season. To avoid overplotting, in this figure forecasts from every fourth reference date are shown; evaluations include all reference dates. Forecasts are represented by the predictive median (black lines) and 50\% and 95\% prediction intervals (blue shaded regions). Solid orange lines show the finalized admission counts reported as of May 1, 2024, while dotted orange lines show the initial reported values that were available on the date predictions were generated.}
+    \label{fig:forecasts_flusight_4}
+\end{figure}
+
+\begin{figure}[!htp]
+    \centering
+    \includegraphics[width=\textwidth]{../artifacts/figures/forecasts_flusight_all_models_p5.pdf}
+    \caption{Influenza data and forecasts for 9 state-level jurisdictions. Accross supplemental figures 3 through 8 and within each figure, states are shown in decreasing order of cumulative hospital admissions during the 2023/24 season. To avoid overplotting, in this figure forecasts from every fourth reference date are shown; evaluations include all reference dates. Forecasts are represented by the predictive median (black lines) and 50\% and 95\% prediction intervals (blue shaded regions). Solid orange lines show the finalized admission counts reported as of May 1, 2024, while dotted orange lines show the initial reported values that were available on the date predictions were generated.}
+    \label{fig:forecasts_flusight_5}
+\end{figure}
+
+\begin{figure}[!htp]
+    \centering
+    \includegraphics[width=\textwidth]{../artifacts/figures/forecasts_flusight_all_models_p6.pdf}
+    \caption{Influenza data and forecasts for 7 state-level jurisdictions. Accross supplemental figures 3 through 8 and within each figure, states are shown in decreasing order of cumulative hospital admissions during the 2023/24 season. To avoid overplotting, in this figure forecasts from every fourth reference date are shown; evaluations include all reference dates. Forecasts are represented by the predictive median (black lines) and 50\% and 95\% prediction intervals (blue shaded regions). Solid orange lines show the finalized admission counts reported as of May 1, 2024, while dotted orange lines show the initial reported values that were available on the date predictions were generated.}
+    \label{fig:forecasts_flusight_6}
+\end{figure}
+
+\section{FluSight results: weighted interval scores by forecast horizon}
+\label{sec:flusight_wis_by_horizon}
+
+Figure \ref{fig:wis_by_horizon} shows the mean WIS for models contributing to FluSight in the 2023/24 season, broken down by forecast horizon. For all models, weighted interval scores increased with larger forecast horizons, indicating lower forecast accuracy. 
+
+\begin{figure}[!htp]
+    \centering
+    \includegraphics[width=\textwidth]{../artifacts/figures/scores_flusight_wis_by_horizon.pdf}
+    \caption{Mean weighted interval scores by model and forecast horizon for models that contributed forecasts for at least 75\% of predictions over the course of the 2023/24 season. Mean scores average across forecasts for multiple reference dates and forecast horizons.}
+    \label{fig:wis_by_horizon}
+\end{figure}
+
 \section{FluSight results: sensitivity analysis for data revisions}
 \label{sec:flusight_sensitivity}
 
@@ -172,9 +231,10 @@ ref_date_loc_all <- get_ref_date_loc_revised(
   min_revision_size = 0)
 @
 
-Table \ref{tab:scores_flusight} contains MAE, MWIS, and PI coverage rates for real-time FluSight predictions, omitting predictions made on combinations of location and reference date for which the most recent available data at the time the prediction was generated were subsequently revised by 10 or more admissions.  This represents a generous sensitivity analysis, omitting \Sexpr{nrow(ref_date_loc_revised)} out of \Sexpr{nrow(ref_date_loc_all)} combinations of location and reference date for which predictions were submitted.  Figure \ref{fig:revisions-dropped-size-plot} displays information about the magnitudes of these revisions.
+We conducted a sensitivity analysis to confirm that the overall evaluations in Tables 2 and 3 of the manuscript are reflective of differences in model forecast skill in the presence of good-quality input data and our evaluation procedure does not differentially penalize models for predictions that were issued when the target data shifted dramatically.
+To this end, Table \ref{tab:scores_flusight} contains MAE, MWIS, and PI coverage rates for real-time FluSight predictions, omitting predictions made on combinations of location and reference date for which the most recent available data at the time the prediction was generated were subsequently revised by 10 or more admissions.  This represents a generous sensitivity analysis, omitting \Sexpr{nrow(ref_date_loc_revised)} out of \Sexpr{nrow(ref_date_loc_all)} combinations of location and reference date for which predictions were submitted.  Figure \ref{fig:revisions-dropped-size-plot} displays information about the magnitudes of these revisions.
 
-Comparing with Table 1 in the primary manuscript, we note that the main results discussed there still hold: Flusion has the best MAE and MWIS values by a substantial margin, while the marginal coverage rates of its central prediction intervals are too conservative.
+Comparing with Table 2 in the primary manuscript, we note that the main results discussed there still hold: Flusion has the best MAE and MWIS values by a substantial margin, while the marginal coverage rates of its central prediction intervals are too conservative.
 
 <<overall-scores, results='asis'>>=
 overall_scores <- read_csv("../artifacts/scores/scores_by_model_flusight_all_without_revisions.csv") |>
@@ -278,7 +338,7 @@ ref_date_loc_revised |>
 \section{Experimental results: sensitivity analysis for data revisions}
 \label{sec:experiments_sensitivity}
 
-Table \ref{tab:scores_experiments} contains results from the post hoc experiments described in section 7 of the main text, omitting forecasts produced for combinations of location and reference date where the latest available NHSN data as of the reference date were subsequently revised up or down by at least 10 admissions. Comparing with table 2 of the main text, we see that the qualitative modeling results discussed there still hold in this sensitivity analysis.
+Table \ref{tab:scores_experiments} contains results from the post hoc experiments described in section 7 of the main text, omitting forecasts produced for combinations of location and reference date where the latest available NHSN data as of the reference date were subsequently revised up or down by at least 10 admissions. Comparing with Table 3 of the main text, we see that the qualitative modeling results discussed there still hold in this sensitivity analysis.
 
 <<posthoc-scores, results='asis'>>=
 component_scores <- read_csv("../artifacts/scores/scores_by_model_flusion_components_without_revisions.csv") |>

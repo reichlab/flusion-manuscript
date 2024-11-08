@@ -1,9 +1,20 @@
-all: manuscript supplement
+all: manuscript/flusion-manuscript.pdf manuscript/flusion-supplement.pdf manuscript/flusion-manuscript-diff.pdf manuscript/flusion-supplement-diff.pdf manuscript/epidemics-submission/sub2/review-response.pdf
 
-manuscript: manuscript/flusion-manuscript.Rnw manuscript/flusion.bib code/utils.R artifacts/figures/data_overview.pdf artifacts/figures/data_standardized.pdf artifacts/figures/forecasts_flusight.pdf artifacts/figures/scores_flusight.pdf artifacts/scores/scores_by_model_flusight_all.csv artifacts/scores/scores_by_model_flusion_components.csv artifacts/scores/scores_by_model_joint_training.csv artifacts/scores/scores_by_model_flusion_data_adj.csv 
+manuscript/epidemics-submission/sub2/review-response.pdf: manuscript/epidemics-submission/sub2/review-response.Rnw
+	R -e "setwd('manuscript/epidemics-submission/sub2'); knitr::knit2pdf('review-response.Rnw', bib_engine='biber')"
+
+manuscript/flusion-manuscript-diff.pdf: manuscript/flusion-manuscript.tex
+	latexdiff manuscript/epidemics-submission/sub1/flusion-manuscript.tex manuscript/flusion-manuscript.tex > manuscript/flusion-manuscript-diff.tex
+	cd manuscript && pdflatex -interaction=nonstopmode flusion-manuscript-diff && biber flusion-manuscript-diff && pdflatex -interaction=nonstopmode flusion-manuscript-diff
+
+manuscript/flusion-supplement-diff.pdf: manuscript/flusion-supplement.tex
+	latexdiff manuscript/epidemics-submission/sub1/flusion-supplement.tex manuscript/flusion-supplement.tex > manuscript/flusion-supplement-diff.tex
+	cd manuscript && pdflatex -interaction=nonstopmode flusion-supplement-diff && biber flusion-supplement-diff && pdflatex -interaction=nonstopmode flusion-supplement-diff
+
+manuscript/flusion-manuscript.pdf: manuscript/flusion-manuscript.Rnw manuscript/flusion.bib code/utils.R artifacts/figures/data_overview.pdf artifacts/figures/data_standardized.pdf artifacts/figures/forecasts_flusight.pdf artifacts/figures/scores_flusight.pdf artifacts/scores/scores_by_model_flusight_all.csv artifacts/scores/scores_by_model_flusion_components.csv artifacts/scores/scores_by_model_joint_training.csv artifacts/scores/scores_by_model_flusion_data_adj.csv 
 	R -e "setwd('manuscript'); knitr::knit2pdf('flusion-manuscript.Rnw', bib_engine='biber')"
 
-supplement: manuscript/flusion-supplement.Rnw artifacts/figures/features.pdf artifacts/figures/feature_importance.pdf artifacts/flusurv_burden_adj.csv
+manuscript/flusion-supplement.pdf: manuscript/flusion-supplement.Rnw artifacts/figures/features.pdf artifacts/figures/feature_importance.pdf artifacts/flusurv_burden_adj.csv artifacts/figures/scores_flusight_wis_by_horizon.pdf
 	R -e "setwd('manuscript'); knitr::knit2pdf('flusion-supplement.Rnw', bib_engine='biber')"
 
 clean:
@@ -32,6 +43,10 @@ artifacts/figures/forecasts_flusight.pdf: code/plot_forecasts_flusight.R artifac
 # plot scores
 artifacts/figures/scores_flusight.pdf: code/plot_scores_flusight.R code/utils.R artifacts/scores/scores_by_model_horizon_flusight_all.csv artifacts/scores/scores_by_model_horizon_reference_date_flusight_all.csv artifacts/target_data.csv
 	Rscript code/plot_scores_flusight.R
+
+# plot WIS by horizon; used in supplement
+artifacts/figures/scores_flusight_wis_by_horizon.pdf: code/plot_scores_flusight_wis_by_horizon.R code/utils.R artifacts/scores/scores_by_model_horizon_flusight_all.csv
+	Rscript code/plot_scores_flusight_wis_by_horizon.R
 
 # compute scores
 artifacts/scores/scores_by_model_%.csv \
